@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Storage Test - Activation App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .status.loading {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .url {
+            font-family: monospace;
+            background-color: #f3f4f6;
+            padding: 5px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+        .data-preview {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 Remote Storage Test</h1>
+        <p>This page tests the remote storage setup for the Activation app.</p>
+
+        <div class="test-section">
+            <h3>📊 Master CSV Data</h3>
+            <p>Testing CSV file loading from remote storage:</p>
+            
+            <div class="url" id="csv-url">https://raw.githubusercontent.com/alawiscious/activation-data/main/master-contacts.csv</div>
+            
+            <button onclick="testCsvData()">Test CSV Data</button>
+            <button onclick="updateCsvUrl()">Update URL</button>
+            
+            <div id="csv-status"></div>
+            <div id="csv-preview"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧬 Genome Enrichment Data</h3>
+            <p>Testing Genome enrichment data storage:</p>
+            
+            <div class="url" id="genome-url">https://raw.githubusercontent.com/alawiscious/activation-genome-data/main/enrichment/enrichment-data.json</div>
+            
+            <button onclick="testGenomeData()">Test Genome Data</button>
+            <button onclick="updateGenomeUrl()">Update URL</button>
+            
+            <div id="genome-status"></div>
+            <div id="genome-preview"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Environment Variables</h3>
+            <p>Current environment configuration:</p>
+            
+            <div id="env-status"></div>
+            <div id="env-preview"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Quick Actions</h3>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <button onclick="generateEnvFile()">Generate .env.production</button>
+            <button onclick="openApp()">Open Activation App</button>
+        </div>
+    </div>
+
+    <script>
+        // Test CSV data loading
+        async function testCsvData() {
+            const statusDiv = document.getElementById('csv-status');
+            const previewDiv = document.getElementById('csv-preview');
+            const url = document.getElementById('csv-url').textContent;
+            
+            statusDiv.innerHTML = '<div class="status loading">🔄 Testing CSV data...</div>';
+            previewDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                const lines = text.split('\n').slice(0, 5); // First 5 lines
+                
+                statusDiv.innerHTML = '<div class="status success">✅ CSV data loaded successfully</div>';
+                previewDiv.innerHTML = `
+                    <strong>Preview (first 5 lines):</strong>
+                    <div class="data-preview">${lines.join('\n')}</div>
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ Failed to load CSV data: ${error.message}</div>`;
+                previewDiv.innerHTML = '';
+            }
+        }
+
+        // Test Genome data loading
+        async function testGenomeData() {
+            const statusDiv = document.getElementById('genome-status');
+            const previewDiv = document.getElementById('genome-preview');
+            const url = document.getElementById('genome-url').textContent;
+            
+            statusDiv.innerHTML = '<div class="status loading">🔄 Testing Genome data...</div>';
+            previewDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                statusDiv.innerHTML = '<div class="status success">✅ Genome data loaded successfully</div>';
+                previewDiv.innerHTML = `
+                    <strong>Data Structure:</strong>
+                    <div class="data-preview">${JSON.stringify(data, null, 2)}</div>
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ Failed to load Genome data: ${error.message}</div>`;
+                previewDiv.innerHTML = '';
+            }
+        }
+
+        // Update CSV URL
+        function updateCsvUrl() {
+            const newUrl = prompt('Enter new CSV URL:', document.getElementById('csv-url').textContent);
+            if (newUrl) {
+                document.getElementById('csv-url').textContent = newUrl;
+            }
+        }
+
+        // Update Genome URL
+        function updateGenomeUrl() {
+            const newUrl = prompt('Enter new Genome data URL:', document.getElementById('genome-url').textContent);
+            if (newUrl) {
+                document.getElementById('genome-url').textContent = newUrl;
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            await testCsvData();
+            await testGenomeData();
+            checkEnvironment();
+        }
+
+        // Check environment variables
+        function checkEnvironment() {
+            const statusDiv = document.getElementById('env-status');
+            const previewDiv = document.getElementById('env-preview');
+            
+            // Check if we're in a Vite environment
+            const isVite = typeof import !== 'undefined' && import.meta && import.meta.env;
+            
+            if (isVite) {
+                statusDiv.innerHTML = '<div class="status success">✅ Vite environment detected</div>';
+                previewDiv.innerHTML = `
+                    <strong>Environment Variables:</strong>
+                    <div class="data-preview">
+                        VITE_DATA_SOURCE: ${import.meta.env.VITE_DATA_SOURCE || 'Not set'}
+                        VITE_GENOME_STORAGE_TYPE: ${import.meta.env.VITE_GENOME_STORAGE_TYPE || 'Not set'}
+                        VITE_AUTH_USERNAME: ${import.meta.env.VITE_AUTH_USERNAME ? '[SET]' : 'Not set'}
+                        VITE_AUTH_PASSWORD: ${import.meta.env.VITE_AUTH_PASSWORD ? '[SET]' : 'Not set'}
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = '<div class="status error">❌ Not in Vite environment</div>';
+                previewDiv.innerHTML = '<div class="data-preview">Environment variables not accessible in this context</div>';
+            }
+        }
+
+        // Generate .env.production file
+        function generateEnvFile() {
+            const csvUrl = document.getElementById('csv-url').textContent;
+            const genomeUrl = document.getElementById('genome-url').textContent;
+            
+            const envContent = `# Production Environment Variables for Activation App
+# DO NOT COMMIT THIS FILE - IT CONTAINS SENSITIVE DATA
+
+# Authentication (REQUIRED - Set your own credentials)
+VITE_AUTH_USERNAME=your_username_here
+VITE_AUTH_PASSWORD=your_secure_password_here
+
+# Data Source Configuration
+VITE_DATA_SOURCE=github
+VITE_DEFAULT_MASTER_CSV=${csvUrl}
+
+# Genome Enrichment Storage Configuration
+VITE_GENOME_STORAGE_TYPE=github
+VITE_GENOME_FALLBACK_LOCAL=true
+
+# API Keys (if needed)
+VITE_ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# App Configuration
+VITE_APP_NAME=Activation
+VITE_APP_VERSION=1.0.0`;
+
+            const blob = new Blob([envContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '.env.production';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ .env.production file generated! Remember to edit it with your actual credentials.');
+        }
+
+        // Open the Activation app
+        function openApp() {
+            window.open('http://localhost:5173', '_blank');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkEnvironment();
+        });
+    </script>
+</body>
+</html>

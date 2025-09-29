@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Hosting Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .warning { color: orange; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .url-test {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.loading { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🌐 Data Hosting Test</h1>
+    
+    <div class="test-section">
+        <h2>📋 Current Data Sources</h2>
+        <p>Testing different data hosting options for the Activation app:</p>
+        
+        <div id="data-sources">
+            <div class="url-test">
+                <strong>GitHub Raw:</strong> 
+                <span id="github-url">https://raw.githubusercontent.com/alawiscious/activation-data/main/master-contacts.csv</span>
+                <span id="github-status" class="status loading">Testing...</span>
+            </div>
+            
+            <div class="url-test">
+                <strong>Local Development:</strong> 
+                <span id="local-url">http://localhost:5177/master.csv</span>
+                <span id="local-status" class="status loading">Testing...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Upload Options</h2>
+        <p>Choose how to host your CSV data files:</p>
+        
+        <div>
+            <h3>Option 1: GitHub (Free & Easy)</h3>
+            <p>✅ Free hosting via GitHub Raw URLs</p>
+            <p>✅ Easy to update files</p>
+            <p>⚠️ Public repository (consider private for sensitive data)</p>
+            <button onclick="testGitHubUpload()">Test GitHub Upload</button>
+        </div>
+        
+        <div>
+            <h3>Option 2: AWS S3 (Production Ready)</h3>
+            <p>✅ Secure and scalable</p>
+            <p>✅ CDN capabilities</p>
+            <p>💰 Costs money but very reliable</p>
+            <button onclick="testS3Upload()">Test S3 Upload</button>
+        </div>
+        
+        <div>
+            <h3>Option 3: Google Drive (Easy Updates)</h3>
+            <p>✅ Easy file sharing</p>
+            <p>✅ Simple updates</p>
+            <p>⚠️ Requires file ID configuration</p>
+            <button onclick="showGoogleDriveInstructions()">Show Instructions</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="test-results">
+            <p class="info">Click "Test All Sources" to check data availability</p>
+        </div>
+        <button onclick="testAllSources()">Test All Sources</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Next Steps</h2>
+        <ol>
+            <li><strong>Upload your data:</strong> Use one of the upload scripts above</li>
+            <li><strong>Update environment variables:</strong> Set VITE_DATA_SOURCE and VITE_DEFAULT_MASTER_CSV</li>
+            <li><strong>Test the app:</strong> Verify data loads correctly</li>
+            <li><strong>Deploy:</strong> Push to GitHub and deploy to AWS Fargate</li>
+        </ol>
+    </div>
+
+    <script>
+        const dataSources = [
+            {
+                name: 'GitHub Raw',
+                url: 'https://raw.githubusercontent.com/alawiscious/activation-data/main/master-contacts.csv',
+                statusId: 'github-status'
+            },
+            {
+                name: 'Local Development',
+                url: 'http://localhost:5177/master.csv',
+                statusId: 'local-status'
+            }
+        ];
+
+        async function testUrl(url, statusId) {
+            const statusElement = document.getElementById(statusId);
+            statusElement.textContent = 'Testing...';
+            statusElement.className = 'status loading';
+
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                if (response.ok) {
+                    statusElement.textContent = '✅ Available';
+                    statusElement.className = 'status success';
+                    return true;
+                } else {
+                    statusElement.textContent = `❌ ${response.status}`;
+                    statusElement.className = 'status error';
+                    return false;
+                }
+            } catch (error) {
+                statusElement.textContent = '❌ Error';
+                statusElement.className = 'status error';
+                return false;
+            }
+        }
+
+        async function testAllSources() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p class="info">Testing all data sources...</p>';
+
+            let availableSources = 0;
+            for (const source of dataSources) {
+                const isAvailable = await testUrl(source.url, source.statusId);
+                if (isAvailable) availableSources++;
+            }
+
+            if (availableSources > 0) {
+                results.innerHTML = `<p class="success">✅ ${availableSources} data source(s) available!</p>`;
+            } else {
+                results.innerHTML = '<p class="error">❌ No data sources available. Please upload your CSV files.</p>';
+            }
+        }
+
+        function testGitHubUpload() {
+            alert('To upload to GitHub:\n\n1. Run: ./upload-data-to-github.sh\n2. Or manually create a repository and upload CSV files\n3. Update VITE_DATA_SOURCE=github in your environment');
+        }
+
+        function testS3Upload() {
+            alert('To upload to S3:\n\n1. Configure AWS CLI: aws configure\n2. Run: ./upload-data-to-s3.sh\n3. Update VITE_DATA_SOURCE=s3 in your environment');
+        }
+
+        function showGoogleDriveInstructions() {
+            alert('Google Drive Setup:\n\n1. Upload CSV files to Google Drive\n2. Get shareable links\n3. Extract file IDs from URLs\n4. Update file IDs in src/lib/dataHosting.ts\n5. Set VITE_DATA_SOURCE=googleDrive');
+        }
+
+        // Test sources on page load
+        window.addEventListener('load', () => {
+            setTimeout(testAllSources, 1000);
+        });
+    </script>
+</body>
+</html>

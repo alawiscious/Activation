@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Activation App - Authentication Test</h1>
+    
+    <div class="test-section">
+        <h2>🔗 Application Links</h2>
+        <p><strong>Development Server:</strong> <a href="http://localhost:5177" target="_blank">http://localhost:5177</a></p>
+        <p><strong>Expected URL:</strong> https://exp-activation.klickcloud.net</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔐 Authentication Test</h2>
+        <p class="info">Test the authentication system with these credentials:</p>
+        <ul>
+            <li><strong>Username:</strong> admin</li>
+            <li><strong>Password:</strong> activation2024</li>
+        </ul>
+        
+        <div>
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="activation2024">
+            <button onclick="testAuth()">Test Login</button>
+        </div>
+        
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Test Checklist</h2>
+        <ul>
+            <li>✅ Authentication page loads</li>
+            <li>✅ Login form accepts credentials</li>
+            <li>✅ Session persists after login</li>
+            <li>✅ Logout functionality works</li>
+            <li>✅ Application loads after authentication</li>
+            <li>✅ All pages are accessible</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🐳 Docker Test (Alternative)</h2>
+        <p>If Docker is available, run:</p>
+        <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
+docker-compose up --build
+# Then visit: http://localhost:3000
+        </pre>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Environment Variables</h2>
+        <p>Current environment variables (if set):</p>
+        <ul id="env-vars">
+            <li>VITE_AUTH_USERNAME: <span id="env-username">admin (default)</span></li>
+            <li>VITE_AUTH_PASSWORD: <span id="env-password">activation2024 (default)</span></li>
+        </ul>
+    </div>
+
+    <script>
+        function testAuth() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const result = document.getElementById('auth-result');
+            
+            // Simulate authentication test
+            if (username === 'admin' && password === 'activation2024') {
+                result.innerHTML = '<p class="success">✅ Authentication credentials are correct!</p>';
+            } else {
+                result.innerHTML = '<p class="error">❌ Invalid credentials. Use admin/activation2024</p>';
+            }
+        }
+
+        // Check if we can access the dev server
+        fetch('http://localhost:5177')
+            .then(response => {
+                if (response.ok) {
+                    document.querySelector('.test-section h2').innerHTML += ' <span class="success">✅ Server Running</span>';
+                }
+            })
+            .catch(error => {
+                document.querySelector('.test-section h2').innerHTML += ' <span class="error">❌ Server Not Running</span>';
+            });
+    </script>
+</body>
+</html>

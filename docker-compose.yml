@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  activation:
+    build: .
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_AUTH_USERNAME=${VITE_AUTH_USERNAME:-admin}
+      - VITE_AUTH_PASSWORD=${VITE_AUTH_PASSWORD:-activation2024}
+      - VITE_ANTHROPIC_API_KEY=${VITE_ANTHROPIC_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
