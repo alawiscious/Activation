@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "name": "activation",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_AUTH_USERNAME": "@vite_auth_username",
+    "VITE_AUTH_PASSWORD": "@vite_auth_password",
+    "VITE_DATA_SOURCE": "github",
+    "VITE_DEFAULT_MASTER_CSV": "https://raw.githubusercontent.com/alawiscious/Activation/main/master-revenue.csv",
+    "VITE_GENOME_STORAGE_TYPE": "github",
+    "VITE_GENOME_FALLBACK_LOCAL": "true"
+  }
+}

@@ -20,9 +20,9 @@ export const DATA_SOURCES: Record<string, DataSource> = {
   // Option 2: GitHub Raw (Free, good for public data)
   github: {
     name: 'GitHub Raw',
-    url: 'https://raw.githubusercontent.com/KlickInc/activation-data/main',
+    url: 'https://raw.githubusercontent.com/alawiscious/Activation/main',
     description: 'Free hosting via GitHub repository',
-    fallback: 'https://raw.githubusercontent.com/alawiscious/activation-data/main'
+    fallback: 'https://raw.githubusercontent.com/alawiscious/Activation/main'
   },
   
   // Option 3: Google Drive (Easy to update)
