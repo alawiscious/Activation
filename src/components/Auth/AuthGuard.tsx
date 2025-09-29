@@ -24,6 +24,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       if (authData) {
         try {
           const { username: storedUsername, password: storedPassword, timestamp } = JSON.parse(authData)
+
           const now = Date.now()
           const oneDay = 24 * 60 * 60 * 1000 // 24 hours
           
