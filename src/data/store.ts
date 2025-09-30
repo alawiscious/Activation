@@ -1265,32 +1265,51 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 console.log(`📊 Downloaded ${(contactsBlob.size / 1024 / 1024).toFixed(1)}MB contacts file`)
                 const contactsFile = new File([contactsBlob], 'master-contacts.csv', { type: 'text/csv' })
                 console.log('🔄 Processing contacts data...')
-                await get().importContactsCsv(await contactsFile.text(), { preview: false, overwrite: true })
-                console.log('✅ Contacts data loaded successfully')
                 
-                // Add contacts to the unified company
+                // Process contacts directly into the unified company
+                const contactsCsvText = await contactsFile.text()
+                const Papa = await import('papaparse')
+                const parseResult = Papa.parse(contactsCsvText, {
+                  header: true,
+                  skipEmptyLines: true,
+                  delimiter: ',',
+                  transformHeader: (header) => header.toLowerCase().replace(/\s+/g, '_'),
+                })
+                
+                if (parseResult.errors.length > 0) {
+                  console.warn('CSV parsing warnings:', parseResult.errors)
+                }
+                
+                const result = transformContactsCsv(parseResult.data as any[])
+                console.log(`📊 Parsed ${result.data.length} contacts from CSV`)
+                
+                // Add contacts directly to the unified company
                 const { companies } = get()
                 const allDataCompany = companies['all-data']
-                if (allDataCompany) {
-                  // Get all contacts from all companies and add to unified company
-                  const allContacts: any[] = []
-                  Object.values(companies).forEach(company => {
-                    allContacts.push(...company.contacts)
-                  })
+                if (allDataCompany && result.data.length > 0) {
+                  // Transform contacts and add them to the unified company
+                  const transformedContacts = result.data.map(contact => ({
+                    ...contact,
+                    id: contact.id || `contact-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  }))
                   
                   // Update the unified company with all contacts
                   set({
                     companies: {
-                      ...companies,
                       'all-data': {
                         ...allDataCompany,
-                        contacts: allContacts
+                        contacts: transformedContacts
                       }
-                    }
+                    },
+                    currentCompanySlug: 'all-data'
                   })
                   
-                  console.log(`👥 Added ${allContacts.length} contacts to unified company`)
+                  console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
                 }
+                
+                console.log('✅ Contacts data loaded successfully')
               } else {
                 console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
               }
