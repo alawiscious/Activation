@@ -1265,148 +1265,20 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             }
             
             // Then load contacts data
-            console.log('👥 Loading contacts data from:', contactsFileUrl)
-            console.log('⏳ This is a large file (95MB), please wait...')
-            try {
-              const contactsRes = await fetch(contactsFileUrl)
-              if (contactsRes.ok) {
-                console.log('📥 Downloading contacts file...')
-                const contactsBlob = await contactsRes.blob()
-                console.log(`📊 Downloaded ${(contactsBlob.size / 1024 / 1024).toFixed(1)}MB contacts file`)
-                const contactsFile = new File([contactsBlob], 'master-contacts.csv', { type: 'text/csv' })
-                console.log('🔄 Processing contacts data...')
-                
-                // Process contacts directly into the unified company
-                const contactsCsvText = await contactsFile.text()
-                const Papa = await import('papaparse')
-                
-                // Normalize headers and data to prevent silent "empty UI"
-                const normalizeKey = (k: string) =>
-                  k?.trim().toLowerCase().replace(/\uFEFF/g, '')          // strip BOM
-                   .replace(/\s+/g, '_')                                   // spaces → underscore
-                   .replace(/[^a-z0-9_]/g, '');                            // drop punctuation
+            console.log('👥 Loading contacts data from:', contactsFileUrl);
+            console.log('⏳ This is a large file (~95MB), please wait...');
 
-                // Bulletproof company filtering
-                const normCompany = (s: string) => (s || '')
-                  .toLowerCase()
-                  .replace(/sa\b|s\.a\./g, '')          // drop corporate suffix
-                  .replace(/[^a-z0-9]+/g, ' ')          // collapse punctuation
-                  .trim();
+            const res = await fetch(contactsFileUrl, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`Contacts HTTP ${res.status} ${res.statusText}`);
 
-                const isSameCompany = (a: string, b: string) =>
-                  normCompany(a) === normCompany(b) ||
-                  normCompany(a).includes(normCompany(b)) ||
-                  normCompany(b).includes(normCompany(a));
+            const csvText = await res.text();
+            console.log('📊 Contacts CSV size (chars):', csvText.length.toLocaleString());
+            console.log('🔄 Processing contacts data...');
 
-                function normalizeRow(r: any) {
-                  const row: any = {};
-                  for (const k in r) row[normalizeKey(k)] = typeof r[k] === 'string' ? r[k].trim() : r[k];
+            // ✅ Use the contacts importer (NOT master)
+            await get().importContactsCsv(csvText);
 
-                  return {
-                    id: row.id ?? crypto.randomUUID?.() ?? String(Math.random()),
-                    first_name: row.first_name ?? row.firstname ?? '',
-                    last_name:  row.last_name  ?? row.lastname  ?? '',
-                    email:      row.email ?? row.work_email ?? '',
-                    company:    row.company ?? row.curr_company ?? row.target_name ?? '',
-                    title:      row.title   ?? row.curr_title  ?? row.position    ?? '',
-                    location:   row.location ?? '',
-                    linkedin_url: row.linkedin_url ?? '',
-                    // keep everything else if you use it elsewhere:
-                    ...row,
-                  };
-                }
-                
-                const parseResult = Papa.parse(contactsCsvText, {
-                  header: true,
-                  skipEmptyLines: 'greedy',
-                  dynamicTyping: false,
-                  quoteChar: '"',
-                  escapeChar: '"',
-                  delimiter: '',        // auto-detect
-                  transformHeader: normalizeKey,
-                  worker: true,         // offload to Web Worker
-                  chunkSize: 1024 * 1024, // 1MB chunks to keep UI responsive
-                })
-                
-                if (parseResult.errors.length > 0) {
-                  console.warn('CSV parsing warnings:', parseResult.errors)
-                }
-                
-                // Normalize all rows
-                const contacts = (parseResult.data as any[]).map(normalizeRow).filter(c =>
-                  c.first_name || c.last_name || c.email || c.company
-                );
-                
-                console.log(`📊 Parsed ${contacts.length} contacts from CSV`)
-                console.info('contacts sample', contacts.slice(0,3));
-                
-                // 1) Prove what's in memory (contacts + selected company)
-                console.info('👀 sample row', contacts?.[0]);
-                console.info('🔑 sample keys', Object.keys(contacts?.[0] ?? {}));
-                
-                // Create contacts directly
-                const { companies } = get()
-                const allDataCompany = companies['all-data']
-                if (allDataCompany && contacts.length > 0) {
-                  // Transform contacts directly without the strict validation
-                  const transformedContacts = contacts.map((contact, index) => ({
-                    id: contact.id || `contact-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                    firstName: contact.first_name || '',
-                    lastName: contact.last_name || '',
-                    email: contact.email || '',
-                    currCompany: contact.company || '',
-                    title: contact.title || '',
-                    level: 'Individual Contributor' as any, // Default level
-                    functionalArea: contact.functional_area || '',
-                    known: false,
-                    isIrrelevant: false,
-                    dispositionToKlick: 'Unknown' as any,
-                    influenceLevel: 'Unknown' as any,
-                    derivedLabel: 'Unknown' as any,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    // Keep original data for reference
-                    ...contact,
-                  }))
-                  
-                  // Update the unified company with all contacts
-                  set({
-                    companies: {
-                      'all-data': {
-                        ...allDataCompany,
-                        contacts: transformedContacts
-                      }
-                    },
-                    currentCompanySlug: 'all-data',
-                    defaultMasterTriggered: true  // Flip state gate
-                  })
-                  
-                  console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
-                  
-                  // Debug: expose data globally for DevTools inspection
-                  if (typeof window !== 'undefined') {
-                    const { companies: updatedCompanies, currentCompanySlug } = get()
-                    const selectedCompany = updatedCompanies[currentCompanySlug || '']
-                    
-                    // Mirror to window for inspection
-                    (window as any).__contacts = transformedContacts;                 // array after normalization
-                    (window as any).__companies = updatedCompanies;               // if you have a separate company list
-                    (window as any).__selectedCompany = selectedCompany;   // whatever drives the main-page filter
-                    
-                    console.info('📈 contacts count', transformedContacts.length);
-                    console.info('🏢 selected company', selectedCompany);
-                    console.info('🏢 selected company contacts', selectedCompany?.contacts?.length || 0);
-                    console.log('🔍 Data exposed as window.__contacts, __companies, __selectedCompany for debugging');
-                  }
-                }
-                
-                console.log('✅ Contacts data loaded successfully')
-              } else {
-                console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
-              }
-            } catch (error) {
-              console.error('❌ Error loading contacts data:', error)
-            }
+            console.log('✅ Contacts data loaded successfully');
             
             console.log('🎉 All data loaded successfully!')
             return
@@ -1663,68 +1535,95 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
       const { currentCompanySlug, companies } = get()
 
       const Papa = await import('papaparse')
-      const parseResult = Papa.parse(csvData, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ',',
-        transformHeader: (header) => header.toLowerCase().replace(/\s+/g, '_'),
-      })
+      
+      const normalizeKey = (s: string) =>
+        s?.replace(/\uFEFF/g, '').trim().toLowerCase().replace(/\s+/g, '_');
 
-      if (parseResult.errors.length > 0) {
-        console.warn('CSV parsing warnings:', parseResult.errors)
-        // Only throw error for critical parsing issues, not warnings
-        const criticalErrors = parseResult.errors.filter(e => e.type === 'Delimiter' || e.type === 'FieldMismatch')
-        if (criticalErrors.length > 0) {
-          throw new Error(`CSV parsing errors: ${criticalErrors.map(e => e.message).join(', ')}`)
-        }
-      }
+      return new Promise<void>((resolve, reject) => {
+        Papa.parse(csvData, {
+          header: true,
+          skipEmptyLines: 'greedy',
+          delimiter: '',          // auto-detect
+          quoteChar: '"',
+          escapeChar: '"',
+          worker: true,
+          transformHeader: normalizeKey,
+          complete: ({ data, errors }) => {
+            if (errors?.length) console.warn('CSV parse warnings:', errors.slice(0, 3));
 
-      const result = transformContactsCsv(parseResult.data as any[])
+            const mapped = (data as any[]).map((r) => {
+              const row: any = {};
+              for (const k in r) row[normalizeKey(k)] = typeof r[k] === 'string' ? r[k].trim() : r[k];
 
-      if (result.data.length > 0) {
-        const overwrite = options?.overwrite === true
-        const preserveEdits = options?.preserveEdits !== false
-        // Use the first available company as fallback, or create a default one
-        const availableCompanies = Object.keys(companies)
-        const fallbackSlug = currentCompanySlug || availableCompanies[0] || 'default-company'
+              return {
+                id: row.id ?? crypto.randomUUID?.() ?? String(Math.random()),
+                first_name: row.first_name ?? row.firstname ?? '',
+                last_name:  row.last_name  ?? row.lastname  ?? '',
+                email:      row.email ?? row.work_email ?? '',
+                company:    row.company ?? row.curr_company ?? row.target_name ?? '',
+                title:      row.title   ?? row.curr_title  ?? row.position    ?? '',
+                location:   row.location ?? '',
+                linkedin_url: row.linkedin_url ?? '',
+                // keep everything else for filtering/analytics:
+                ...row,
+              };
+            }).filter(c => c.first_name || c.last_name || c.email || c.company);
 
-        const preview = buildContactImportPreview(result.data, get().companies, fallbackSlug)
+            console.log(`📊 Mapped ${mapped.length} contacts from CSV`)
+            console.info('contacts sample', mapped.slice(0,3));
 
-        if (options?.preview !== false) {
-          const previewId = `contact-preview-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
-          set({
-            pendingContactImport: {
-              id: previewId,
-              groups: preview.groups,
-              recordsByGroup: preview.recordsByGroup,
-              options: { overwrite, preserveEdits },
-              fallbackSlug,
-            },
-          })
-          return { ...result, previewId, previewGroups: preview.groups }
-        }
+            // Add contacts to the unified company
+            const { companies } = get()
+            const allDataCompany = companies['all-data']
+            if (allDataCompany) {
+              // Transform to Contact type
+              const transformedContacts = mapped.map(contact => ({
+                id: contact.id,
+                firstName: contact.first_name,
+                lastName: contact.last_name,
+                email: contact.email,
+                currCompany: contact.company,
+                title: contact.title,
+                level: 'Individual Contributor' as any,
+                functionalArea: contact.functional_area || '',
+                known: false,
+                isIrrelevant: false,
+                dispositionToKlick: 'Unknown' as any,
+                influenceLevel: 'Unknown' as any,
+                derivedLabel: 'Unknown' as any,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                ...contact,
+              }))
 
-        const defaultAssignments: Record<string, ContactImportAssignment> = {}
-        preview.groups.forEach(group => {
-          defaultAssignments[group.key] = group.defaultAssignment
-        })
+              // Update the unified company with all contacts
+              set({
+                companies: {
+                  'all-data': {
+                    ...allDataCompany,
+                    contacts: transformedContacts
+                  }
+                },
+                currentCompanySlug: 'all-data',
+                defaultMasterTriggered: true
+              })
 
-        const { storage } = get()
-        const committed = applyContactAssignmentsToCompanies(
-          get().companies,
-          preview.recordsByGroup,
-          defaultAssignments,
-          { overwrite, preserveEdits },
-          fallbackSlug
-        )
+              console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
+              
+              // Debug: expose data globally
+              if (typeof window !== 'undefined') {
+                (window as any).__contacts = transformedContacts;
+                (window as any).__companies = get().companies;
+                (window as any).__selectedCompany = get().companies['all-data'];
+                console.log('🔍 Data exposed as window.__contacts, __companies, __selectedCompany');
+              }
+            }
 
-        set({ companies: committed.companies, isHydrated: true })
-        committed.touchedSlugs.forEach(slug => {
-          storage.save(slug, committed.companies[slug]).catch(() => {})
-        })
-      }
-
-      return result
+            resolve();
+          },
+          error: reject,
+        });
+      });
     },
 
     importContactsFromUrl: async (url, options) => {
