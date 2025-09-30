@@ -29,6 +29,19 @@ export function Contacts() {
     return currentCompany.contacts.filter(contact => !contact.isIrrelevant).slice(0, 1000)
   }, [currentCompany])
 
+  // 3) Debug render path
+  useEffect(() => {
+    console.info('🔍 Contacts page render debug:', {
+      currentCompanySlug,
+      companyCount: Object.keys(companies).length,
+      currentCompany: currentCompany?.name,
+      currentCompanyContacts: currentCompany?.contacts?.length || 0,
+      activeContactsCount: activeContacts.length,
+      allContactsCount: allContacts.length,
+      companies: Object.keys(companies)
+    })
+  }, [currentCompanySlug, companies, currentCompany, activeContacts, allContacts])
+
   // Get ALL contacts from ALL companies for comprehensive import
   const allContacts = useMemo(() => {
     const allContactsList: Contact[] = []

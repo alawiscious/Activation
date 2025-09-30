@@ -49,6 +49,19 @@ export function ContactsTable() {
   
   const filteredContacts = allContacts
 
+  // 2) Debug filtering path
+  React.useEffect(() => {
+    console.info('🔍 ContactsTable render debug:', {
+      currentCompanySlug,
+      companyCount: Object.keys(companies).length,
+      currentCompany: currentCompany?.name,
+      currentCompanyContacts: currentCompany?.contacts?.length || 0,
+      allContactsCount: allContacts.length,
+      filteredContactsCount: filteredContacts.length,
+      companies: Object.keys(companies)
+    })
+  }, [currentCompanySlug, companies, currentCompany, allContacts, filteredContacts])
+
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
 
   const columns = useMemo(

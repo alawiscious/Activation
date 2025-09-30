@@ -1335,6 +1335,10 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 console.info('👀 contacts sample', normalizedContacts.slice(0, 3));
                 console.info('📈 contacts count', normalizedContacts.length);
                 
+                // 1) Prove what's in memory (contacts + selected company)
+                console.info('👀 sample row', normalizedContacts?.[0]);
+                console.info('🔑 sample keys', Object.keys(normalizedContacts?.[0] ?? {}));
+                
                 const result = transformContactsCsv(normalizedContacts)
                 
                 // Add contacts directly to the unified company
@@ -1363,10 +1367,20 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                   
                   console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
                   
-                  // Debug: expose contacts globally for DevTools inspection
+                  // Debug: expose data globally for DevTools inspection
                   if (typeof window !== 'undefined') {
-                    (window as any).__contacts = transformedContacts;
-                    console.log('🔍 Contacts exposed as window.__contacts for debugging');
+                    const { companies: updatedCompanies, currentCompanySlug } = get()
+                    const selectedCompany = updatedCompanies[currentCompanySlug || '']
+                    
+                    // Mirror to window for inspection
+                    (window as any).__contacts = transformedContacts;                 // array after normalization
+                    (window as any).__companies = updatedCompanies;               // if you have a separate company list
+                    (window as any).__selectedCompany = selectedCompany;   // whatever drives the main-page filter
+                    
+                    console.info('📈 contacts count', transformedContacts.length);
+                    console.info('🏢 selected company', selectedCompany);
+                    console.info('🏢 selected company contacts', selectedCompany?.contacts?.length || 0);
+                    console.log('🔍 Data exposed as window.__contacts, __companies, __selectedCompany for debugging');
                   }
                 }
                 
