@@ -499,7 +499,8 @@ interface PendingContactImportState {
   fallbackSlug?: string
 }
 
-// const buildContactImportPreview = (
+/*
+const buildContactImportPreview = (
   records: ContactImportRecord[],
   companies: Record<string, CompanyState>,
   fallbackSlug?: string
@@ -557,6 +558,7 @@ interface PendingContactImportState {
 
   return { groups, recordsByGroup, defaultAssignments }
 }
+*/
 
 const applyContactAssignmentsToCompanies = (
   companies: Record<string, CompanyState>,
