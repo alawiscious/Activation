@@ -1616,11 +1616,24 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
 
               console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
               
+              // Debug: Check data structure integrity
+              const finalCompanies = get().companies;
+              console.log('🔍 Final companies count:', Object.keys(finalCompanies).length);
+              console.log('🔍 All-data company contacts count:', finalCompanies['all-data']?.contacts?.length || 0);
+              console.log('🔍 Sample company keys:', Object.keys(finalCompanies).slice(0, 5));
+              
+              // Check if any company has contact data mixed in
+              Object.entries(finalCompanies).forEach(([slug, company]) => {
+                if (slug !== 'all-data' && company.contacts && company.contacts.length > 0) {
+                  console.log(`⚠️ Company ${slug} has ${company.contacts.length} contacts (should be 0)`);
+                }
+              });
+              
               // Debug: expose data globally
               if (typeof window !== 'undefined') {
                 (window as any).__contacts = transformedContacts;
-                (window as any).__companies = get().companies;
-                (window as any).__selectedCompany = get().companies['all-data'];
+                (window as any).__companies = finalCompanies;
+                (window as any).__selectedCompany = finalCompanies['all-data'];
                 console.log('🔍 Data exposed as window.__contacts, __companies, __selectedCompany');
                 
                 // Quick sanity checks
