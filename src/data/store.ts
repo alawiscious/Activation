@@ -1194,8 +1194,18 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
         const { companies } = get()
         const hasData = Object.keys(companies).length > 0
         
-        // Force reload if we have less than 700 companies (indicating incomplete data)
-        const shouldReload = !hasData || Object.keys(companies).length < 700
+        // Force reload if we have no data or no contacts in the unified company
+        const allDataCompany = companies['all-data']
+        const hasContacts = allDataCompany && allDataCompany.contacts.length > 0
+        const shouldReload = !hasData || !hasContacts
+        
+        console.log('🔍 Auto-import check:', {
+          hasData,
+          companyCount: Object.keys(companies).length,
+          hasAllDataCompany: !!allDataCompany,
+          contactCount: allDataCompany?.contacts.length || 0,
+          shouldReload
+        })
         
         if (shouldReload) {
           console.log('🚀 Starting auto-import for:', DEFAULT_MASTER_CSV_URL)
