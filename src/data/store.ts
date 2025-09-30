@@ -1269,19 +1269,63 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 // Process contacts directly into the unified company
                 const contactsCsvText = await contactsFile.text()
                 const Papa = await import('papaparse')
+                
+                // Normalize headers and data to prevent silent "empty UI"
+                const normalizeKey = (k: string) =>
+                  k?.trim().toLowerCase().replace(/\uFEFF/g, '')          // strip BOM
+                   .replace(/\s+/g, '_')                                   // spaces → underscore
+                   .replace(/[^a-z0-9_]/g, '');                            // drop punctuation
+
+                // Bulletproof company filtering
+                const normCompany = (s: string) => (s || '')
+                  .toLowerCase()
+                  .replace(/sa\b|s\.a\./g, '')          // drop corporate suffix
+                  .replace(/[^a-z0-9]+/g, ' ')          // collapse punctuation
+                  .trim();
+
+                const isSameCompany = (a: string, b: string) =>
+                  normCompany(a) === normCompany(b) ||
+                  normCompany(a).includes(normCompany(b)) ||
+                  normCompany(b).includes(normCompany(a));
+
+                function normalizeRow(row: Record<string, any>) {
+                  const out: Record<string, any> = {};
+                  for (const k in row) out[normalizeKey(k)] = typeof row[k] === 'string' ? row[k].trim() : row[k];
+                  // Standard aliases expected by UI
+                  out.first_name  = out.first_name  ?? out.firstname  ?? out.given_name  ?? '';
+                  out.last_name   = out.last_name   ?? out.lastname   ?? out.surname     ?? '';
+                  out.company     = out.company     ?? out.account    ?? out.org         ?? '';
+                  out.email       = out.email       ?? out.work_email ?? out.mail        ?? '';
+                  out.title       = out.title       ?? out.job_title  ?? out.role        ?? '';
+                  out.location    = out.location    ?? out.city       ?? out.region      ?? '';
+                  return out;
+                }
+                
                 const parseResult = Papa.parse(contactsCsvText, {
                   header: true,
-                  skipEmptyLines: true,
-                  delimiter: ',',
-                  transformHeader: (header) => header.toLowerCase().replace(/\s+/g, '_'),
+                  skipEmptyLines: 'greedy',
+                  dynamicTyping: false,
+                  quoteChar: '"',
+                  escapeChar: '"',
+                  delimiter: '',        // auto-detect
+                  transformHeader: normalizeKey,
+                  worker: true,         // offload to Web Worker
+                  chunkSize: 1024 * 1024, // 1MB chunks to keep UI responsive
                 })
                 
                 if (parseResult.errors.length > 0) {
                   console.warn('CSV parsing warnings:', parseResult.errors)
                 }
                 
-                const result = transformContactsCsv(parseResult.data as any[])
-                console.log(`📊 Parsed ${result.data.length} contacts from CSV`)
+                // Normalize all rows
+                const normalizedContacts = (parseResult.data as any[]).map(normalizeRow)
+                console.log(`📊 Parsed ${normalizedContacts.length} contacts from CSV`)
+                
+                // Debug: show sample of normalized data
+                console.info('👀 contacts sample', normalizedContacts.slice(0, 3));
+                console.info('📈 contacts count', normalizedContacts.length);
+                
+                const result = transformContactsCsv(normalizedContacts)
                 
                 // Add contacts directly to the unified company
                 const { companies } = get()
@@ -1303,10 +1347,17 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                         contacts: transformedContacts
                       }
                     },
-                    currentCompanySlug: 'all-data'
+                    currentCompanySlug: 'all-data',
+                    defaultMasterTriggered: true  // Flip state gate
                   })
                   
                   console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
+                  
+                  // Debug: expose contacts globally for DevTools inspection
+                  if (typeof window !== 'undefined') {
+                    (window as any).__contacts = transformedContacts;
+                    console.log('🔍 Contacts exposed as window.__contacts for debugging');
+                  }
                 }
                 
                 console.log('✅ Contacts data loaded successfully')
