@@ -1356,16 +1356,13 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                     email: contact.email || '',
                     currCompany: contact.company || '',
                     title: contact.title || '',
-                    location: contact.location || '',
-                    linkedinUrl: contact.linkedin_url || '',
+                    level: 'Individual Contributor' as any, // Default level
                     functionalArea: contact.functional_area || '',
-                    seniorityLevel: contact.seniority_level || '',
                     known: false,
                     isIrrelevant: false,
                     dispositionToKlick: 'Unknown' as any,
                     influenceLevel: 'Unknown' as any,
-                    derivedContactLabel: 'Unknown' as any,
-                    level: contact.seniority_level || 'Unknown',
+                    derivedLabel: 'Unknown' as any,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     // Keep original data for reference
