@@ -9,6 +9,7 @@ import type { CompanyMapping } from '@/components/CSVMapping/CSVColumnMapper'
 import { Navigation } from '@/components/Shared/Navigation'
 
 export function PharmaVisualPivot() {
+  console.log('🚀 PharmaVisualPivot component loaded!')
   const {
     currentCompanySlug,
     companies,
