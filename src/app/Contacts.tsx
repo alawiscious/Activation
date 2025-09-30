@@ -279,6 +279,23 @@ export function Contacts() {
                     First contact: {currentCompany.contacts[0].firstName} {currentCompany.contacts[0].lastName} at {currentCompany.contacts[0].currCompany}
                   </p>
                 )}
+                {allContacts.length > 0 && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    First allContacts: {allContacts[0].firstName} {allContacts[0].lastName} at {allContacts[0].currCompany}
+                  </p>
+                )}
+                <div className="mt-2">
+                  <button 
+                    onClick={() => {
+                      console.log('🔍 Full companies object:', companies);
+                      console.log('🔍 Current company:', currentCompany);
+                      console.log('🔍 All contacts sample:', allContacts.slice(0, 3));
+                    }}
+                    className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-xs"
+                  >
+                    Log to Console
+                  </button>
+                </div>
               </div>
             </div>
           </div>
