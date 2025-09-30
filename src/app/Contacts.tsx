@@ -14,6 +14,7 @@ import { ComprehensiveGenomeImporter } from '@/components/Contacts/Comprehensive
 import type { Contact } from '@/types/domain'
 
 export function Contacts() {
+  console.log('🚀 Contacts component loaded!')
   const navigate = useNavigate()
   const { currentCompanySlug, companies, setCurrentCompany, updateContact } = usePharmaVisualPivotStore()
   const [searchTerm, setSearchTerm] = useState('')

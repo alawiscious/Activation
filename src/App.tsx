@@ -18,7 +18,10 @@ import { TherapeuticAreasNew as TherapeuticAreas } from '@/app/TherapeuticAreasN
 import './App.css'
 
 function App() {
+  console.log('🚀 App component rendering')
+  
   useEffect(() => {
+    console.log('🚀 App component mounted')
     if (typeof document !== 'undefined') {
       document.title = 'Klick Account Activation'
     }

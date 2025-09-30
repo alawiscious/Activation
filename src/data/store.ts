@@ -1188,6 +1188,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
       console.log('🧹 Cleared all data')
     },
     autoRunIfEnabled: async () => {
+      console.log('🚀 autoRunIfEnabled called')
       // Always load default data as if it's an API that's always available
       if (typeof window !== 'undefined' && DEFAULT_MASTER_CSV_URL) {
         // Check if we already have data loaded
