@@ -433,29 +433,29 @@ const ensureContactClassification = (contact: Contact): Contact => {
 //     .replace(/[^a-z0-9]+/g, '-')
 //     .replace(/(^-|-$)+/g, '')
 
-const normalizeCompanyName = (value?: string) =>
-  (value ? value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim() : '')
+// const normalizeCompanyName = (value?: string) =>
+//   (value ? value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim() : '')
 
-const companySimilarity = (a: string, b: string): number => {
-  if (!a || !b) return 0
-  if (a === b) return 1
-  const tokensA = a.split(' ').filter(Boolean)
-  const tokensB = b.split(' ').filter(Boolean)
-  if (!tokensA.length || !tokensB.length) return 0
-  let matches = 0
-  const setB = new Set(tokensB)
-  for (const token of tokensA) {
-    if (setB.has(token)) {
-      matches += 1
-    } else {
-      const partial = tokensB.find(t => t.startsWith(token) || token.startsWith(t))
-      if (partial) matches += 0.5
-    }
-  }
-  const tokenScore = matches / Math.max(tokensA.length, tokensB.length)
-  const substringScore = a.includes(b) || b.includes(a) ? Math.min(a.length, b.length) / Math.max(a.length, b.length) : 0
-  return Math.max(tokenScore, substringScore)
-}
+// const companySimilarity = (a: string, b: string): number => {
+//   if (!a || !b) return 0
+//   if (a === b) return 1
+//   const tokensA = a.split(' ').filter(Boolean)
+//   const tokensB = b.split(' ').filter(Boolean)
+//   if (!tokensA.length || !tokensB.length) return 0
+//   let matches = 0
+//   const setB = new Set(tokensB)
+//   for (const token of tokensA) {
+//     if (setB.has(token)) {
+//       matches += 1
+//     } else {
+//       const partial = tokensB.find(t => t.startsWith(token) || token.startsWith(t))
+//       if (partial) matches += 0.5
+//     }
+//   }
+//   const tokenScore = matches / Math.max(tokensA.length, tokensB.length)
+//   const substringScore = a.includes(b) || b.includes(a) ? Math.min(a.length, b.length) / Math.max(a.length, b.length) : 0
+//   return Math.max(tokenScore, substringScore)
+// }
 
 
 // const getCompanyMatchCandidates = (nameHint: string | undefined, companies: Record<string, CompanyState>, limit = 6) => {
@@ -1623,9 +1623,11 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 console.info('sample keys', Object.keys((window as any).__contacts?.[0] || {}));
                 console.info('sample contact', (window as any).__contacts?.[0]);
               }
-            }
 
-            resolve({ success: true, contactsProcessed: transformedContacts.length });
+              resolve({ success: true, contactsProcessed: transformedContacts.length });
+            } else {
+              resolve({ success: false, contactsProcessed: 0 });
+            }
           },
           error: reject,
         });
