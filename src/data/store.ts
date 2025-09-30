@@ -1232,7 +1232,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 console.log(`📊 Downloaded ${(contactsBlob.size / 1024 / 1024).toFixed(1)}MB contacts file`)
                 const contactsFile = new File([contactsBlob], 'master-contacts.csv', { type: 'text/csv' })
                 console.log('🔄 Processing contacts data...')
-                await get().importContactsCsv(await contactsFile.text())
+                await get().importContactsCsv(await contactsFile.text(), { preview: false, overwrite: true })
                 console.log('✅ Contacts data loaded successfully')
               } else {
                 console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
@@ -1493,7 +1493,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
       csvData: string,
       options?: { overwrite?: boolean; preserveEdits?: boolean; preview?: boolean }
     ) => {
-      const { currentCompanySlug } = get()
+      const { currentCompanySlug, companies } = get()
 
       const Papa = await import('papaparse')
       const parseResult = Papa.parse(csvData, {
@@ -1517,7 +1517,9 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
       if (result.data.length > 0) {
         const overwrite = options?.overwrite === true
         const preserveEdits = options?.preserveEdits !== false
-        const fallbackSlug = currentCompanySlug || undefined
+        // Use the first available company as fallback, or create a default one
+        const availableCompanies = Object.keys(companies)
+        const fallbackSlug = currentCompanySlug || availableCompanies[0] || 'default-company'
 
         const preview = buildContactImportPreview(result.data, get().companies, fallbackSlug)
 
