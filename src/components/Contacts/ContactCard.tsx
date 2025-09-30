@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import type { AgencyAlignment, Contact, DispositionToKlick, InfluenceLevel } from '@/types/domain'
 import { usePharmaVisualPivotStore } from '@/data/store'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AGENCY_ALIGNMENT_OPTIONS,

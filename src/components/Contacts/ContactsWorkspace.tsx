@@ -65,10 +65,8 @@ export function ContactsWorkspace({ contactFilter = 'all', selectedFunctionalAre
 
   const [cardSize, setCardSize] = useState<'small' | 'full'>('small')
 
-  if (!company) return null
-
-  const currentChart = (company.orgCharts || []).find(c => c.id === company.currentOrgChartId) || null
-  const selectedContact = selectedNodeId ? company.contacts.find(c => c.id === selectedNodeId) || null : null
+  const currentChart = company ? (company.orgCharts || []).find(c => c.id === company.currentOrgChartId) || null : null
+  const selectedContact = selectedNodeId && company ? company.contacts.find(c => c.id === selectedNodeId) || null : null
 
   useEffect(() => {
     const variant = (currentChart?.cardVariant as 'small' | 'full' | undefined) ?? 'small'
@@ -132,6 +130,8 @@ export function ContactsWorkspace({ contactFilter = 'all', selectedFunctionalAre
       window.removeEventListener('resize', recompute)
     }
   }, [currentChart, cardSize])
+
+  if (!company) return null
 
   const handleCreateChart = () => {
     const id = createOrgChart(newChartName || 'Untitled')
