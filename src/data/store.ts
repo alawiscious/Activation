@@ -1607,7 +1607,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 updatedAt: new Date(),
               }))
 
-              // Distribute contacts to individual companies based on currCompany field
+              // Distribute contacts to existing companies only (no new company creation)
               const { companies: existingCompanies } = get()
               const updatedCompanies = { ...existingCompanies }
               
@@ -1621,37 +1621,37 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 contactsByCompany.get(companyName)!.push(contact)
               })
               
-              // Add contacts to existing companies or create new ones
+              // Match contacts to existing companies only (don't create new ones)
               contactsByCompany.forEach((contacts, companyName) => {
-                // Find existing company by name
-                let companySlug = Object.keys(updatedCompanies).find(slug => 
-                  updatedCompanies[slug].name === companyName
-                )
+                // Find existing company by name (case-insensitive fuzzy matching)
+                const companySlug = Object.keys(updatedCompanies).find(slug => {
+                  const existingName = updatedCompanies[slug].name.toLowerCase()
+                  const contactCompanyName = companyName.toLowerCase()
+                  
+                  // Exact match
+                  if (existingName === contactCompanyName) return true
+                  
+                  // Fuzzy match - check if one contains the other
+                  if (existingName.includes(contactCompanyName) || contactCompanyName.includes(existingName)) return true
+                  
+                  // Remove common suffixes for better matching
+                  const cleanExisting = existingName.replace(/\b(inc|llc|corp|corporation|ltd|limited|sa|s\.a\.)\b/g, '').trim()
+                  const cleanContact = contactCompanyName.replace(/\b(inc|llc|corp|corporation|ltd|limited|sa|s\.a\.)\b/g, '').trim()
+                  
+                  return cleanExisting === cleanContact || 
+                         cleanExisting.includes(cleanContact) || 
+                         cleanContact.includes(cleanExisting)
+                })
                 
-                if (!companySlug) {
-                  // Create new company if it doesn't exist
-                  companySlug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                if (companySlug) {
+                  // Add contacts to the existing company
                   updatedCompanies[companySlug] = {
-                    id: `company-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                    slug: companySlug,
-                    name: companyName,
-                    brands: [],
-                    contacts: [],
-                    revenueRows: [],
-                    filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
-                    orgCharts: [],
-                    currentOrgChartId: null,
-                    targets: [],
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
+                    ...updatedCompanies[companySlug],
+                    contacts: [...(updatedCompanies[companySlug].contacts || []), ...contacts],
+                    updatedAt: new Date()
                   }
-                }
-                
-                // Add contacts to the company
-                updatedCompanies[companySlug] = {
-                  ...updatedCompanies[companySlug],
-                  contacts: [...(updatedCompanies[companySlug].contacts || []), ...contacts],
-                  updatedAt: new Date()
+                } else {
+                  console.log(`⚠️ No matching company found for contact company: "${companyName}"`)
                 }
               })
               
@@ -1666,8 +1666,28 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 // Don't set currentCompanySlug - let user choose
               })
 
-              console.log(`👥 Distributed ${transformedContacts.length} contacts to ${contactsByCompany.size} companies`)
-              console.log(`📊 Companies with contacts:`, Array.from(contactsByCompany.keys()).slice(0, 10))
+              // Count matched vs unmatched contacts
+              let matchedContacts = 0
+              let unmatchedContacts = 0
+              contactsByCompany.forEach((contacts, companyName) => {
+                const companySlug = Object.keys(updatedCompanies).find(slug => {
+                  const existingName = updatedCompanies[slug].name.toLowerCase()
+                  const contactCompanyName = companyName.toLowerCase()
+                  return existingName === contactCompanyName || 
+                         existingName.includes(contactCompanyName) || 
+                         contactCompanyName.includes(existingName)
+                })
+                if (companySlug) {
+                  matchedContacts += contacts.length
+                } else {
+                  unmatchedContacts += contacts.length
+                }
+              })
+              
+              console.log(`👥 Contact matching results:`)
+              console.log(`   ✅ Matched: ${matchedContacts} contacts to existing companies`)
+              console.log(`   ❌ Unmatched: ${unmatchedContacts} contacts (no company found)`)
+              console.log(`📊 Total companies: ${Object.keys(updatedCompanies).length} (only from master import file)`)
               
               // Debug: Check data structure integrity
               const finalCompanies = get().companies;
