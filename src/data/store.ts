@@ -1607,20 +1607,67 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 updatedAt: new Date(),
               }))
 
-              // Update the unified company with all contacts (preserve existing companies)
+              // Distribute contacts to individual companies based on currCompany field
               const { companies: existingCompanies } = get()
-              set({
-                companies: {
-                  ...existingCompanies,  // Keep all existing companies
-                  'all-data': {
-                    ...allDataCompany,
-                    contacts: transformedContacts
+              const updatedCompanies = { ...existingCompanies }
+              
+              // Group contacts by company
+              const contactsByCompany = new Map<string, Contact[]>()
+              transformedContacts.forEach(contact => {
+                const companyName = contact.currCompany || 'Unknown'
+                if (!contactsByCompany.has(companyName)) {
+                  contactsByCompany.set(companyName, [])
+                }
+                contactsByCompany.get(companyName)!.push(contact)
+              })
+              
+              // Add contacts to existing companies or create new ones
+              contactsByCompany.forEach((contacts, companyName) => {
+                // Find existing company by name
+                let companySlug = Object.keys(updatedCompanies).find(slug => 
+                  updatedCompanies[slug].name === companyName
+                )
+                
+                if (!companySlug) {
+                  // Create new company if it doesn't exist
+                  companySlug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                  updatedCompanies[companySlug] = {
+                    id: `company-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    slug: companySlug,
+                    name: companyName,
+                    brands: [],
+                    contacts: [],
+                    revenueRows: [],
+                    filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
+                    orgCharts: [],
+                    currentOrgChartId: null,
+                    targets: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
                   }
                 }
+                
+                // Add contacts to the company
+                updatedCompanies[companySlug] = {
+                  ...updatedCompanies[companySlug],
+                  contacts: [...(updatedCompanies[companySlug].contacts || []), ...contacts],
+                  updatedAt: new Date()
+                }
+              })
+              
+              // Also add all contacts to the unified company
+              updatedCompanies['all-data'] = {
+                ...allDataCompany,
+                contacts: transformedContacts
+              }
+              
+              set({
+                companies: updatedCompanies
                 // Don't set currentCompanySlug - let user choose
               })
 
-              console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)
+              console.log(`👥 Distributed ${transformedContacts.length} contacts to ${contactsByCompany.size} companies`)
+              console.log(`📊 Companies with contacts:`, Array.from(contactsByCompany.keys()).slice(0, 10))
               
               // Debug: Check data structure integrity
               const finalCompanies = get().companies;
