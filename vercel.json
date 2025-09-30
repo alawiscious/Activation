@@ -26,7 +26,7 @@
   ],
   "env": {
     "VITE_DATA_SOURCE": "github",
-    "VITE_DEFAULT_MASTER_CSV": "https://raw.githubusercontent.com/alawiscious/Activation/main/master-company-file.csv",
+    "VITE_DEFAULT_MASTER_CSV": "https://raw.githubusercontent.com/alawiscious/Activation/main/master-revenue.csv",
     "VITE_GENOME_STORAGE_TYPE": "github",
     "VITE_GENOME_FALLBACK_LOCAL": "true"
   }
