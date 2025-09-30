@@ -1298,17 +1298,35 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                   normCompany(a).includes(normCompany(b)) ||
                   normCompany(b).includes(normCompany(a));
 
-                function normalizeRow(row: Record<string, any>) {
-                  const out: Record<string, any> = {};
-                  for (const k in row) out[normalizeKey(k)] = typeof row[k] === 'string' ? row[k].trim() : row[k];
-                  // Standard aliases expected by UI
-                  out.first_name  = out.first_name  ?? out.firstname  ?? out.given_name  ?? '';
-                  out.last_name   = out.last_name   ?? out.lastname   ?? out.surname     ?? '';
-                  out.company     = out.company     ?? out.account    ?? out.org         ?? '';
-                  out.email       = out.email       ?? out.work_email ?? out.mail        ?? '';
-                  out.title       = out.title       ?? out.job_title  ?? out.role        ?? '';
-                  out.location    = out.location    ?? out.city       ?? out.region      ?? '';
-                  return out;
+                function normalizeRow(r: any) {
+                  // normalize header access (in case transformHeader wasn't used)
+                  const row: any = {};
+                  for (const k in r) row[normalizeKey(k)] = typeof r[k] === 'string' ? r[k].trim() : r[k];
+
+                  // map to the field names the UI expects
+                  const company =
+                    row.company ??
+                    row.curr_company ??        // <-- from your CSV
+                    row.target_name ??         // backup
+                    '';
+
+                  const title =
+                    row.title ??
+                    row.curr_title ??          // <-- from your CSV
+                    row.position ?? '';
+
+                  return {
+                    id: row.id ?? crypto.randomUUID?.() ?? String(Math.random()),
+                    first_name: row.first_name ?? row.firstname ?? '',
+                    last_name: row.last_name ?? row.lastname ?? '',
+                    email: row.email ?? row.work_email ?? '',
+                    company,
+                    title,
+                    location: row.location ?? '',
+                    linkedin_url: row.linkedin_url ?? '',
+                    // keep the rest if you need them:
+                    ...row,
+                  };
                 }
                 
                 const parseResult = Papa.parse(contactsCsvText, {
@@ -1329,6 +1347,9 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 
                 // Normalize all rows
                 const normalizedContacts = (parseResult.data as any[]).map(normalizeRow)
+                  // if you previously filtered out rows missing company/title, this now keeps them:
+                  .filter(c => c.first_name || c.last_name || c.email || c.company);
+                
                 console.log(`📊 Parsed ${normalizedContacts.length} contacts from CSV`)
                 
                 // Debug: show sample of normalized data

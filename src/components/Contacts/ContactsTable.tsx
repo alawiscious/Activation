@@ -63,11 +63,12 @@ export function ContactsTable() {
 
     // 2) Measure the filtered result (could be 0)
     if (typeof window !== 'undefined' && (window as any).__contacts && (window as any).__selectedCompany) {
-      const norm = (s='') => s.toLowerCase().replace(/sa\b|s\.a\./g,'').replace(/[^a-z0-9]+/g,' ').trim();
+      const normCo = (s='') => s.toLowerCase().replace(/\bsa\b|\bs\.a\.\b/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+      const isSameCompany = (a: string, b: string) =>
+        !!a && !!b && (normCo(a) === normCo(b) || normCo(a).includes(normCo(b)) || normCo(b).includes(normCo(a)));
 
       const filtered = (window as any).__contacts?.filter((c: any) =>
-        norm(c.company).includes(norm((window as any).__selectedCompany?.name || '')) ||
-        norm((window as any).__selectedCompany?.name || '').includes(norm(c.company))
+        isSameCompany(c.company, (window as any).__selectedCompany?.name || '')
       ) ?? [];
 
       console.info('🧮 filtered count', filtered.length);
