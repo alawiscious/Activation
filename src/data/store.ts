@@ -1242,6 +1242,41 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             }
             
             console.log('🎉 All data loaded successfully!')
+            
+            // Create a single "All Data" company to hold everything
+            const { companies } = get()
+            if (Object.keys(companies).length > 0) {
+              const allDataSlug = 'all-data'
+              const allDataCompany = {
+                slug: allDataSlug,
+                name: 'All Data',
+                brands: [],
+                contacts: [],
+                revenueRows: [],
+                filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
+                orgCharts: [],
+                currentOrgChartId: null,
+                targets: [],
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }
+              
+              // Merge all data into the single company
+              Object.values(companies).forEach(company => {
+                allDataCompany.brands.push(...company.brands)
+                allDataCompany.contacts.push(...company.contacts)
+                allDataCompany.revenueRows.push(...company.revenueRows)
+              })
+              
+              // Replace all companies with the single merged company
+              set({ 
+                companies: { [allDataSlug]: allDataCompany },
+                currentCompanySlug: allDataSlug
+              })
+              
+              console.log(`🏢 Created unified company with ${allDataCompany.contacts.length} contacts and ${allDataCompany.brands.length} brands`)
+            }
+            
             return
             
           } catch (error) {
