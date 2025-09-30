@@ -33,9 +33,13 @@ export function ContactsWorkspace({ contactFilter = 'all', selectedFunctionalAre
 
   const company: CompanyState | null = currentCompanySlug ? companies[currentCompanySlug] : null
   const filteredContacts = useMemo(() => {
-    if (!company) return []
+    // Get all contacts from all companies instead of requiring company selection
+    const allContactsList: any[] = []
+    Object.values(companies).forEach(company => {
+      allContactsList.push(...company.contacts.filter(contact => !contact.isIrrelevant))
+    })
     
-    let contacts = selectors.selectFilteredContacts(company)
+    let contacts = allContactsList
     
     // Apply contact filter
     if (contactFilter === 'known') {
@@ -54,7 +58,7 @@ export function ContactsWorkspace({ contactFilter = 'all', selectedFunctionalAre
     }
 
     return contacts
-  }, [company, contactFilter, selectedFunctionalAreas])
+  }, [companies, contactFilter, selectedFunctionalAreas])
 
   const [newChartName, setNewChartName] = useState('')
   const [renameName, setRenameName] = useState('')

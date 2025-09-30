@@ -38,7 +38,16 @@ export function ContactsTable() {
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const currentCompany = currentCompanySlug ? companies[currentCompanySlug] : null
-  const filteredContacts = currentCompany ? selectors.selectFilteredContacts(currentCompany) : []
+  // Get all contacts from all companies instead of requiring company selection
+  const allContacts = useMemo(() => {
+    const allContactsList: Contact[] = []
+    Object.values(companies).forEach(company => {
+      allContactsList.push(...company.contacts.filter(contact => !contact.isIrrelevant))
+    })
+    return allContactsList
+  }, [companies])
+  
+  const filteredContacts = allContacts
 
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
 

@@ -29,9 +29,14 @@ export function ContactDetail() {
   
   const currentCompany = currentCompanySlug ? companies[currentCompanySlug] : null
   const contact = useMemo(() => {
-    if (!currentCompany || !contactId) return null
-    return currentCompany.contacts.find(c => c.id === contactId)
-  }, [currentCompany, contactId])
+    if (!contactId) return null
+    // Search across all companies for the contact
+    for (const company of Object.values(companies)) {
+      const foundContact = company.contacts.find(c => c.id === contactId)
+      if (foundContact) return foundContact
+    }
+    return null
+  }, [companies, contactId])
 
   const [showRichProfile, setShowRichProfile] = useState(false)
 
