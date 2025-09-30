@@ -1616,6 +1616,11 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 (window as any).__companies = get().companies;
                 (window as any).__selectedCompany = get().companies['all-data'];
                 console.log('🔍 Data exposed as window.__contacts, __companies, __selectedCompany');
+                
+                // Quick sanity checks
+                console.info('contacts count', (window as any).__contacts?.length);
+                console.info('sample keys', Object.keys((window as any).__contacts?.[0] || {}));
+                console.info('sample contact', (window as any).__contacts?.[0]);
               }
             }
 

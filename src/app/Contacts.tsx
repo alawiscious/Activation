@@ -290,6 +290,12 @@ export function Contacts() {
                       console.log('🔍 Full companies object:', companies);
                       console.log('🔍 Current company:', currentCompany);
                       console.log('🔍 All contacts sample:', allContacts.slice(0, 3));
+                      
+                      // Quick sanity checks
+                      (window as any).__contacts = allContacts;
+                      console.info('contacts count', (window as any).__contacts?.length);
+                      console.info('sample keys', Object.keys((window as any).__contacts?.[0] || {}));
+                      console.info('sample contact', (window as any).__contacts?.[0]);
                     }}
                     className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-xs"
                   >
