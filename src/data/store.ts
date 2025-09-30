@@ -1236,19 +1236,20 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
               const { companies } = get()
               if (Object.keys(companies).length > 0) {
                 const allDataSlug = 'all-data'
-                const allDataCompany = {
-                  slug: allDataSlug,
-                  name: 'All Data',
-                  brands: [],
-                  contacts: [],
-                  revenueRows: [],
-                  filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
-                  orgCharts: [],
-                  currentOrgChartId: null,
-                  targets: [],
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                }
+              const allDataCompany = {
+                id: `company-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                slug: allDataSlug,
+                name: 'All Data',
+                brands: [] as Brand[],
+                contacts: [] as Contact[],
+                revenueRows: [] as RevenueRow[],
+                filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
+                orgCharts: [],
+                currentOrgChartId: null,
+                targets: [],
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }
                 
                 // Merge all revenue data into the single company
                 Object.values(companies).forEach(company => {
@@ -1550,7 +1551,8 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
           escapeChar: '"',
           worker: true,
           transformHeader: normalizeKey,
-          complete: ({ data, errors }) => {
+          complete: (results) => {
+            const { data, errors } = results;
             if (errors?.length) console.warn('CSV parse warnings:', errors.slice(0, 3));
 
             const mapped = (data as any[]).map((r) => {
@@ -1578,8 +1580,8 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             const { companies } = get()
             const allDataCompany = companies['all-data']
             if (allDataCompany) {
-              // Transform to Contact type
-              const transformedContacts = mapped.map(contact => ({
+              // Transform to Contact type - flatten the structure
+              const transformedContacts: Contact[] = mapped.map(contact => ({
                 id: contact.id,
                 firstName: contact.first_name,
                 lastName: contact.last_name,
@@ -1595,7 +1597,6 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 derivedLabel: 'Unknown' as any,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                ...contact,
               }))
 
               // Update the unified company with all contacts
