@@ -21,7 +21,7 @@ import {
   Mail,
   Building2,
 } from 'lucide-react'
-import { usePharmaVisualPivotStore, normalizeCompanyName, companySimilarity } from '@/data/store'
+import { usePharmaVisualPivotStore } from '@/data/store'
 import type { Contact } from '@/types/domain'
 import { formatDerivedLabel, getLabelPalette } from '@/lib/contactLabeling'
 
@@ -46,16 +46,7 @@ export function ContactsTable() {
     return allContactsList
   }, [companies])
   
-  const filteredContacts = useMemo(() => {
-    // If we have a current company, filter contacts by company similarity
-    if (currentCompany?.name) {
-      return allContacts.filter(contact => 
-        companySimilarity(contact.currCompany || '', currentCompany.name) > 0
-      )
-    }
-    // Otherwise show all contacts
-    return allContacts
-  }, [allContacts, currentCompany?.name])
+  const filteredContacts = allContacts
 
   // 2) Debug filtering path
   React.useEffect(() => {
@@ -71,8 +62,12 @@ export function ContactsTable() {
 
     // 2) Measure the filtered result (could be 0)
     if (typeof window !== 'undefined' && (window as any).__contacts && (window as any).__selectedCompany) {
+      const normCo = (s='') => s.toLowerCase().replace(/\bsa\b|\bs\.a\.\b/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+      const isSameCompany = (a: string, b: string) =>
+        !!a && !!b && (normCo(a) === normCo(b) || normCo(a).includes(normCo(b)) || normCo(b).includes(normCo(a)));
+
       const filtered = (window as any).__contacts?.filter((c: any) =>
-        companySimilarity(c.company || '', (window as any).__selectedCompany?.name || '') > 0
+        isSameCompany(c.company, (window as any).__selectedCompany?.name || '')
       ) ?? [];
 
       console.info('🧮 filtered count', filtered.length);
