@@ -271,45 +271,31 @@ export function Contacts() {
                 Manage and analyze pharmaceutical industry contacts
               </p>
               
-              {/* Debug info */}
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                <h3 className="font-semibold text-yellow-800">Debug Info:</h3>
-                <p className="text-sm text-yellow-700">
-                  Companies: {Object.keys(companies).length} | 
-                  Current: {currentCompany?.name || 'None'} | 
-                  Current Contacts: {currentCompany?.contacts?.length || 0} | 
-                  All Contacts: {allContacts.length} | 
-                  Active: {activeContacts.length}
-                </p>
-                {currentCompany?.contacts && currentCompany.contacts.length > 0 && (
-                  <p className="text-xs text-yellow-600 mt-1">
-                    First contact: {currentCompany.contacts[0].firstName} {currentCompany.contacts[0].lastName} at {currentCompany.contacts[0].currCompany}
-                  </p>
-                )}
-                {allContacts.length > 0 && (
-                  <p className="text-xs text-yellow-600 mt-1">
-                    First allContacts: {allContacts[0].firstName} {allContacts[0].lastName} at {allContacts[0].currCompany}
-                  </p>
-                )}
-                <div className="mt-2">
-                  <button 
-                    onClick={() => {
-                      console.log('🔍 Full companies object:', companies);
-                      console.log('🔍 Current company:', currentCompany);
-                      console.log('🔍 All contacts sample:', allContacts.slice(0, 3));
-                      
-                      // Quick sanity checks
-                      (window as any).__contacts = allContacts;
-                      console.info('contacts count', (window as any).__contacts?.length);
-                      console.info('sample keys', Object.keys((window as any).__contacts?.[0] || {}));
-                      console.info('sample contact', (window as any).__contacts?.[0]);
-                    }}
-                    className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-xs"
-                  >
-                    Log to Console
-                  </button>
-                </div>
-              </div>
+             {/* Company Selection */}
+             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+               <h3 className="font-semibold text-blue-800 mb-2">Select Company:</h3>
+               <select
+                 value={currentCompanySlug || ''}
+                 onChange={(e) => setCurrentCompany(e.target.value)}
+                 className="w-full p-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               >
+                 <option value="">Choose a company...</option>
+                 {Object.values(companies)
+                   .filter(company => company.name !== 'All Data') // Exclude the unified company from main list
+                   .sort((a, b) => a.name.localeCompare(b.name))
+                   .map(company => (
+                     <option key={company.slug} value={company.slug}>
+                       {company.name} ({company.contacts?.length || 0} contacts)
+                     </option>
+                   ))}
+                 <option value="all-data">All Data ({allContacts.length} contacts)</option>
+               </select>
+               {currentCompany && (
+                 <p className="text-sm text-blue-700 mt-2">
+                   Selected: <strong>{currentCompany.name}</strong> with {currentCompany.contacts?.length || 0} contacts
+                 </p>
+               )}
+             </div>
             </div>
           </div>
         </div>
