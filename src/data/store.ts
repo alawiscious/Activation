@@ -1360,18 +1360,32 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 console.info('👀 sample row', normalizedContacts?.[0]);
                 console.info('🔑 sample keys', Object.keys(normalizedContacts?.[0] ?? {}));
                 
-                const result = transformContactsCsv(normalizedContacts)
-                
-                // Add contacts directly to the unified company
+                // Bypass transformContactsCsv and create contacts directly
                 const { companies } = get()
                 const allDataCompany = companies['all-data']
-                if (allDataCompany && result.data.length > 0) {
-                  // Transform contacts and add them to the unified company
-                  const transformedContacts = result.data.map(contact => ({
-                    ...contact,
+                if (allDataCompany && normalizedContacts.length > 0) {
+                  // Transform contacts directly without the strict validation
+                  const transformedContacts = normalizedContacts.map((contact, index) => ({
                     id: contact.id || `contact-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    firstName: contact.first_name || '',
+                    lastName: contact.last_name || '',
+                    email: contact.email || '',
+                    currCompany: contact.company || '',
+                    title: contact.title || '',
+                    location: contact.location || '',
+                    linkedinUrl: contact.linkedin_url || '',
+                    functionalArea: contact.functional_area || '',
+                    seniorityLevel: contact.seniority_level || '',
+                    known: false,
+                    isIrrelevant: false,
+                    dispositionToKlick: 'Unknown' as any,
+                    influenceLevel: 'Unknown' as any,
+                    derivedContactLabel: 'Unknown' as any,
+                    level: contact.seniority_level || 'Unknown',
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    // Keep original data for reference
+                    ...contact,
                   }))
                   
                   // Update the unified company with all contacts
