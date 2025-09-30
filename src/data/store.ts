@@ -426,12 +426,12 @@ const ensureContactClassification = (contact: Contact): Contact => {
   }
 }
 
-const slugifyCompany = (value: string): string =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
+// const slugifyCompany = (value: string): string =>
+//   value
+//     .toLowerCase()
+//     .trim()
+//     .replace(/[^a-z0-9]+/g, '-')
+//     .replace(/(^-|-$)+/g, '')
 
 const normalizeCompanyName = (value?: string) =>
   (value ? value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim() : '')
@@ -458,22 +458,22 @@ const companySimilarity = (a: string, b: string): number => {
 }
 
 
-const getCompanyMatchCandidates = (nameHint: string | undefined, companies: Record<string, CompanyState>, limit = 6) => {
-  const normalizedHint = normalizeCompanyName(nameHint)
-  if (!normalizedHint) return [] as Array<{ slug: string; name: string; score: number }>
-  return Object.values(companies)
-    .map(c => ({
-      slug: c.slug,
-      name: c.name,
-      score: Math.max(
-        companySimilarity(normalizedHint, normalizeCompanyName(c.name)),
-        companySimilarity(normalizedHint, normalizeCompanyName(c.slug))
-      ),
-    }))
-    .filter(candidate => candidate.score > 0)
-    .sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name))
-    .slice(0, limit)
-}
+// const getCompanyMatchCandidates = (nameHint: string | undefined, companies: Record<string, CompanyState>, limit = 6) => {
+//   const normalizedHint = normalizeCompanyName(nameHint)
+//   if (!normalizedHint) return [] as Array<{ slug: string; name: string; score: number }>
+//   return Object.values(companies)
+//     .map(c => ({
+//       slug: c.slug,
+//       name: c.name,
+//       score: Math.max(
+//         companySimilarity(normalizedHint, normalizeCompanyName(c.name)),
+//         companySimilarity(normalizedHint, normalizeCompanyName(c.slug))
+//       ),
+//     }))
+//     .filter(candidate => candidate.score > 0)
+//     .sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name))
+//     .slice(0, limit)
+// }
 
 type ContactImportAssignment =
   | { action: 'assign'; slug: string }
@@ -1534,7 +1534,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
 
     importContactsCsv: async (
       csvData: string,
-      options?: { overwrite?: boolean; preserveEdits?: boolean; preview?: boolean }
+      _options?: { overwrite?: boolean; preserveEdits?: boolean; preview?: boolean }
     ) => {
       const Papa = await import('papaparse')
       
@@ -1625,7 +1625,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
               }
             }
 
-            resolve();
+            resolve({ success: true, contactsProcessed: transformedContacts.length });
           },
           error: reject,
         });

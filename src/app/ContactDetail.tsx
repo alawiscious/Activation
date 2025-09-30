@@ -25,9 +25,7 @@ import RichLinkedInProfile from '@/components/Contacts/RichLinkedInProfile'
 export function ContactDetail() {
   const { contactId } = useParams<{ contactId: string }>()
   const navigate = useNavigate()
-  const { currentCompanySlug, companies, updateContact } = usePharmaVisualPivotStore()
-  
-  const currentCompany = currentCompanySlug ? companies[currentCompanySlug] : null
+  const { companies, updateContact } = usePharmaVisualPivotStore()
   const contact = useMemo(() => {
     if (!contactId) return null
     // Search across all companies for the contact
