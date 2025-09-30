@@ -17,8 +17,6 @@
     }
   ],
   "env": {
-    "VITE_AUTH_USERNAME": "@vite_auth_username",
-    "VITE_AUTH_PASSWORD": "@vite_auth_password",
     "VITE_DATA_SOURCE": "github",
     "VITE_DEFAULT_MASTER_CSV": "https://raw.githubusercontent.com/alawiscious/Activation/main/master-revenue.csv",
     "VITE_GENOME_STORAGE_TYPE": "github",
