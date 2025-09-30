@@ -1299,32 +1299,19 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                   normCompany(b).includes(normCompany(a));
 
                 function normalizeRow(r: any) {
-                  // normalize header access (in case transformHeader wasn't used)
                   const row: any = {};
                   for (const k in r) row[normalizeKey(k)] = typeof r[k] === 'string' ? r[k].trim() : r[k];
-
-                  // map to the field names the UI expects
-                  const company =
-                    row.company ??
-                    row.curr_company ??        // <-- from your CSV
-                    row.target_name ??         // backup
-                    '';
-
-                  const title =
-                    row.title ??
-                    row.curr_title ??          // <-- from your CSV
-                    row.position ?? '';
 
                   return {
                     id: row.id ?? crypto.randomUUID?.() ?? String(Math.random()),
                     first_name: row.first_name ?? row.firstname ?? '',
-                    last_name: row.last_name ?? row.lastname ?? '',
-                    email: row.email ?? row.work_email ?? '',
-                    company,
-                    title,
-                    location: row.location ?? '',
+                    last_name:  row.last_name  ?? row.lastname  ?? '',
+                    email:      row.email ?? row.work_email ?? '',
+                    company:    row.company ?? row.curr_company ?? row.target_name ?? '',
+                    title:      row.title   ?? row.curr_title  ?? row.position    ?? '',
+                    location:   row.location ?? '',
                     linkedin_url: row.linkedin_url ?? '',
-                    // keep the rest if you need them:
+                    // keep everything else if you use it elsewhere:
                     ...row,
                   };
                 }
@@ -1346,26 +1333,23 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 }
                 
                 // Normalize all rows
-                const normalizedContacts = (parseResult.data as any[]).map(normalizeRow)
-                  // if you previously filtered out rows missing company/title, this now keeps them:
-                  .filter(c => c.first_name || c.last_name || c.email || c.company);
+                const contacts = (parseResult.data as any[]).map(normalizeRow).filter(c =>
+                  c.first_name || c.last_name || c.email || c.company
+                );
                 
-                console.log(`📊 Parsed ${normalizedContacts.length} contacts from CSV`)
-                
-                // Debug: show sample of normalized data
-                console.info('👀 contacts sample', normalizedContacts.slice(0, 3));
-                console.info('📈 contacts count', normalizedContacts.length);
+                console.log(`📊 Parsed ${contacts.length} contacts from CSV`)
+                console.info('contacts sample', contacts.slice(0,3));
                 
                 // 1) Prove what's in memory (contacts + selected company)
-                console.info('👀 sample row', normalizedContacts?.[0]);
-                console.info('🔑 sample keys', Object.keys(normalizedContacts?.[0] ?? {}));
+                console.info('👀 sample row', contacts?.[0]);
+                console.info('🔑 sample keys', Object.keys(contacts?.[0] ?? {}));
                 
-                // Bypass transformContactsCsv and create contacts directly
+                // Create contacts directly
                 const { companies } = get()
                 const allDataCompany = companies['all-data']
-                if (allDataCompany && normalizedContacts.length > 0) {
+                if (allDataCompany && contacts.length > 0) {
                   // Transform contacts directly without the strict validation
-                  const transformedContacts = normalizedContacts.map((contact, index) => ({
+                  const transformedContacts = contacts.map((contact, index) => ({
                     id: contact.id || `contact-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                     firstName: contact.first_name || '',
                     lastName: contact.last_name || '',
