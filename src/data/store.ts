@@ -433,29 +433,15 @@ const ensureContactClassification = (contact: Contact): Contact => {
 //     .replace(/[^a-z0-9]+/g, '-')
 //     .replace(/(^-|-$)+/g, '')
 
-// const normalizeCompanyName = (value?: string) =>
-//   (value ? value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim() : '')
+export function normalizeCompanyName(s = '') {
+  return s.toLowerCase().replace(/\bsa\b|\bs\.a\.\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
 
-// const companySimilarity = (a: string, b: string): number => {
-//   if (!a || !b) return 0
-//   if (a === b) return 1
-//   const tokensA = a.split(' ').filter(Boolean)
-//   const tokensB = b.split(' ').filter(Boolean)
-//   if (!tokensA.length || !tokensB.length) return 0
-//   let matches = 0
-//   const setB = new Set(tokensB)
-//   for (const token of tokensA) {
-//     if (setB.has(token)) {
-//       matches += 1
-//     } else {
-//       const partial = tokensB.find(t => t.startsWith(token) || token.startsWith(t))
-//       if (partial) matches += 0.5
-//     }
-//   }
-//   const tokenScore = matches / Math.max(tokensA.length, tokensB.length)
-//   const substringScore = a.includes(b) || b.includes(a) ? Math.min(a.length, b.length) / Math.max(a.length, b.length) : 0
-//   return Math.max(tokenScore, substringScore)
-// }
+export function companySimilarity(a = '', b = '') {
+  const A = normalizeCompanyName(a), B = normalizeCompanyName(b);
+  if (!A || !B) return 0;
+  return A === B || A.includes(B) || B.includes(A) ? 1 : 0;
+}
 
 
 // const getCompanyMatchCandidates = (nameHint: string | undefined, companies: Record<string, CompanyState>, limit = 6) => {
