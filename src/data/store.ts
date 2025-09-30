@@ -1219,6 +1219,39 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
               const companyFile = new File([companyBlob], 'master-company-file.csv', { type: 'text/csv' })
               await get().importMasterCsv(companyFile)
               console.log('✅ Company data loaded successfully')
+              
+              // Immediately create unified company after revenue data loads
+              const { companies } = get()
+              if (Object.keys(companies).length > 0) {
+                const allDataSlug = 'all-data'
+                const allDataCompany = {
+                  slug: allDataSlug,
+                  name: 'All Data',
+                  brands: [],
+                  contacts: [],
+                  revenueRows: [],
+                  filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
+                  orgCharts: [],
+                  currentOrgChartId: null,
+                  targets: [],
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                }
+                
+                // Merge all revenue data into the single company
+                Object.values(companies).forEach(company => {
+                  allDataCompany.brands.push(...company.brands)
+                  allDataCompany.revenueRows.push(...company.revenueRows)
+                })
+                
+                // Replace all companies with the single merged company
+                set({ 
+                  companies: { [allDataSlug]: allDataCompany },
+                  currentCompanySlug: allDataSlug
+                })
+                
+                console.log(`🏢 Created unified company with ${allDataCompany.brands.length} brands`)
+              }
             }
             
             // Then load contacts data
@@ -1234,6 +1267,30 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 console.log('🔄 Processing contacts data...')
                 await get().importContactsCsv(await contactsFile.text(), { preview: false, overwrite: true })
                 console.log('✅ Contacts data loaded successfully')
+                
+                // Add contacts to the unified company
+                const { companies } = get()
+                const allDataCompany = companies['all-data']
+                if (allDataCompany) {
+                  // Get all contacts from all companies and add to unified company
+                  const allContacts: any[] = []
+                  Object.values(companies).forEach(company => {
+                    allContacts.push(...company.contacts)
+                  })
+                  
+                  // Update the unified company with all contacts
+                  set({
+                    companies: {
+                      ...companies,
+                      'all-data': {
+                        ...allDataCompany,
+                        contacts: allContacts
+                      }
+                    }
+                  })
+                  
+                  console.log(`👥 Added ${allContacts.length} contacts to unified company`)
+                }
               } else {
                 console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
               }
@@ -1242,41 +1299,6 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             }
             
             console.log('🎉 All data loaded successfully!')
-            
-            // Create a single "All Data" company to hold everything
-            const { companies } = get()
-            if (Object.keys(companies).length > 0) {
-              const allDataSlug = 'all-data'
-              const allDataCompany = {
-                slug: allDataSlug,
-                name: 'All Data',
-                brands: [],
-                contacts: [],
-                revenueRows: [],
-                filters: { brands: [], therapeuticAreas: [], functionalAreas: [], levels: [], titleSearch: '', knownOnly: false },
-                orgCharts: [],
-                currentOrgChartId: null,
-                targets: [],
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              }
-              
-              // Merge all data into the single company
-              Object.values(companies).forEach(company => {
-                allDataCompany.brands.push(...company.brands)
-                allDataCompany.contacts.push(...company.contacts)
-                allDataCompany.revenueRows.push(...company.revenueRows)
-              })
-              
-              // Replace all companies with the single merged company
-              set({ 
-                companies: { [allDataSlug]: allDataCompany },
-                currentCompanySlug: allDataSlug
-              })
-              
-              console.log(`🏢 Created unified company with ${allDataCompany.contacts.length} contacts and ${allDataCompany.brands.length} brands`)
-            }
-            
             return
             
           } catch (error) {
