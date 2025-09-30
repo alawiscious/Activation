@@ -1548,7 +1548,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
           delimiter: '',          // auto-detect
           quoteChar: '"',
           escapeChar: '"',
-          worker: true,
+          worker: false,          // Disable worker to avoid DataCloneError
           transformHeader: normalizeKey,
           complete: (results) => {
             const { data, errors } = results;
