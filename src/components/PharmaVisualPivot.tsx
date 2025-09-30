@@ -36,13 +36,27 @@ export function PharmaVisualPivot() {
 
   const summaryMetrics = useMemo(() => {
     const companyList = Object.values(companies)
+    
+    // Debug: Log company count and sample company names
+    console.log('🔍 Dashboard company count debug:', {
+      totalCompanies: companyList.length,
+      sampleCompanyNames: companyList.slice(0, 5).map(c => c.name),
+      hasAllDataCompany: !!companies['all-data'],
+      allDataContacts: companies['all-data']?.contacts?.length || 0
+    })
 
     const brandNames = new Set<string>()
     const indicationEntries = new Set<string>()
     let contactsTotal = 0
 
     companyList.forEach(company => {
-      contactsTotal += company.contacts?.length ?? 0
+      // Only count contacts from the "all-data" unified company to avoid double-counting
+      // Individual companies may have duplicate contacts, so we only count the unified company
+      if (company.slug === 'all-data') {
+        contactsTotal += company.contacts?.length ?? 0
+      }
+      // Skip individual companies to avoid counting duplicate contacts
+      
       company.brands?.forEach(brand => {
         const normalizedName = brand.name?.trim().toLowerCase()
         if (normalizedName) {
@@ -365,6 +379,17 @@ export function PharmaVisualPivot() {
                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
                   >
                     Clear Auto-Sources
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('🧹 Clearing all data and reloading')
+                      clearAllData()
+                      autoRunTriggeredRef.current = false
+                      autoRunIfEnabled()
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                  >
+                    Clear Data & Reload
                   </button>
                 </div>
               </div>

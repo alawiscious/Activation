@@ -88,9 +88,9 @@ export function getFallbackUrl(filename: string): string | null {
 
 // File mapping for different environments
 export const DATA_FILES = {
-  contacts: 'Public/master-contacts.csv',
-  revenue: 'Public/Master Import file.csv', 
-  companies: 'Public/Master Import file.csv'  // Use Master Import file for company data since it contains company/brand info
+  contacts: 'public/master-contacts.csv',
+  revenue: 'public/Master Import file.csv', 
+  companies: 'public/Master Import file.csv'  // Use Master Import file for company data since it contains company/brand info
 } as const
 
 // Helper to load data with fallback

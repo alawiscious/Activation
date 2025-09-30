@@ -1200,7 +1200,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
         // Force reload if we have no data or no contacts in the unified company
         const allDataCompany = companies['all-data']
         const hasContacts = allDataCompany && allDataCompany.contacts.length > 0
-        const shouldReload = !hasData || !hasContacts || !allDataCompany
+        const shouldReload = !hasData || !allDataCompany || Object.keys(companies).length < 700 // Force reload if less than 700 companies
         
         console.log('🔍 Auto-import check:', {
           hasData,
@@ -1238,6 +1238,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
               const companyFile = new File([companyBlob], 'master-company-file.csv', { type: 'text/csv' })
               await get().importMasterCsv(companyFile)
               console.log('✅ Company data loaded successfully')
+              console.log('🔍 Companies loaded from master import:', Object.keys(get().companies).length)
               
               // Immediately create unified company after revenue data loads
               const { companies } = get()
@@ -2170,6 +2171,8 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
       let processed = 0
       let brandsCreated = 0
       let upserts = 0
+      let skippedNoCompany = 0
+      let skippedNoBrand = 0
 
       const Papa = await import('papaparse')
       await new Promise<void>((resolve, reject) => {
@@ -2189,9 +2192,21 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             processed++
 
             const companyName = (row['company'] || '').toString().trim()
-            if (!companyName) return
+            if (!companyName) {
+              skippedNoCompany++
+              if (skippedNoCompany <= 5) {
+                console.log('🔍 Skipping row without company name:', row)
+              }
+              return
+            }
             const brandName = (row['brand'] || row['product'] || '').toString().trim()
-            if (!brandName) return
+            if (!brandName) {
+              skippedNoBrand++
+              if (skippedNoBrand <= 5) {
+                console.log('🔍 Skipping row without brand name:', { company: companyName, row })
+              }
+              return
+            }
 
             const slug = slugify(companyName)
             let wc = working.get(slug)
@@ -2312,6 +2327,15 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
           }
         })
         return { companies: newCompanies }
+      })
+
+      console.log('🔍 importMasterCsv completed:', {
+        totalProcessed: processed,
+        companiesAffected: working.size,
+        brandsCreated,
+        upserts,
+        skippedNoCompany,
+        skippedNoBrand
       })
 
       return {

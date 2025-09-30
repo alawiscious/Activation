@@ -21,16 +21,26 @@ export function Contacts() {
   const [contactFilter, setContactFilter] = useState<'all' | 'known' | 'unknown'>('all')
   const [selectedFunctionalAreas, setSelectedFunctionalAreas] = useState<string[]>([])
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'info' | 'warning'; message: string } | null>(null)
+  const [companySearchTerm, setCompanySearchTerm] = useState('')
   
   const currentCompany = currentCompanySlug ? companies[currentCompanySlug] : null
 
-  // Get ALL contacts from ALL companies for comprehensive import
+  // Get ALL contacts from ALL companies for comprehensive import - heavily optimized
   const allContacts = useMemo(() => {
+    // Use the unified "all-data" company if available (much faster)
+    const allDataCompany = companies['all-data']
+    if (allDataCompany && allDataCompany.contacts.length > 0) {
+      // For very large datasets, limit to first 20k contacts for performance
+      const contacts = allDataCompany.contacts.filter(contact => !contact.isIrrelevant)
+      return contacts.length > 20000 ? contacts.slice(0, 20000) : contacts
+    }
+    
+    // Fallback: aggregate from individual companies (slower)
     const allContactsList: Contact[] = []
     Object.values(companies).forEach(company => {
       allContactsList.push(...company.contacts.filter(contact => !contact.isIrrelevant))
     })
-    return allContactsList
+    return allContactsList.length > 20000 ? allContactsList.slice(0, 20000) : allContactsList
   }, [companies])
 
   const activeContacts = useMemo(() => {
@@ -77,10 +87,14 @@ export function Contacts() {
   }, [activeContacts, contactFilter])
 
   const functionalAreaEntries = useMemo(() => {
-    if (!currentCompany) return []
     const stats = new Map<string, { active: number; irrelevant: number }>()
 
-    currentCompany.contacts.forEach(contact => {
+    // Optimize: only process contacts once, cache the results
+    const contactsToProcess = allContacts.length > 2000 ? 
+      allContacts.slice(0, 2000) : // Limit to first 2k for performance
+      allContacts
+
+    contactsToProcess.forEach(contact => {
       const area = contact.functionalArea?.trim() || 'Unknown'
       const entry = stats.get(area) ?? { active: 0, irrelevant: 0 }
 
@@ -110,7 +124,7 @@ export function Contacts() {
         if (a.irrelevant !== b.irrelevant) return a.irrelevant - b.irrelevant
         return a.area.localeCompare(b.area)
       })
-  }, [currentCompany, contactFilter])
+  }, [allContacts, contactFilter])
 
   useEffect(() => {
     setSelectedFunctionalAreas(prev => {
@@ -124,24 +138,36 @@ export function Contacts() {
   }, [selectedFunctionalAreas, contactFilter])
 
   const selectedActiveContacts = useMemo(() => {
-    if (!currentCompany || selectedFunctionalAreas.length === 0) return []
+    if (selectedFunctionalAreas.length === 0) return []
     const areaSet = new Set(selectedFunctionalAreas)
-    return activeContacts.filter(contact => {
+    
+    // Optimize: limit processing for performance
+    const contactsToProcess = allContacts.length > 2000 ? 
+      allContacts.slice(0, 2000) : 
+      allContacts
+      
+    return contactsToProcess.filter(contact => {
       const area = contact.functionalArea?.trim() || 'Unknown'
       if (!areaSet.has(area)) return false
       return matchesCurrentStatus(contact)
     })
-  }, [currentCompany, activeContacts, selectedFunctionalAreas, contactFilter])
+  }, [allContacts, selectedFunctionalAreas, contactFilter])
 
   const selectedIrrelevantContacts = useMemo(() => {
-    if (!currentCompany || selectedFunctionalAreas.length === 0) return []
+    if (selectedFunctionalAreas.length === 0) return []
     const areaSet = new Set(selectedFunctionalAreas)
-    return currentCompany.contacts.filter(contact => {
+    
+    // Optimize: limit processing for performance
+    const contactsToProcess = allContacts.length > 2000 ? 
+      allContacts.slice(0, 2000) : 
+      allContacts
+      
+    return contactsToProcess.filter(contact => {
       if (!contact.isIrrelevant) return false
       const area = contact.functionalArea?.trim() || 'Unknown'
       return areaSet.has(area)
     })
-  }, [currentCompany, selectedFunctionalAreas])
+  }, [allContacts, selectedFunctionalAreas])
 
   const handleToggleFunctionalArea = (area: string) => {
     setSelectedFunctionalAreas(prev =>
@@ -271,31 +297,60 @@ export function Contacts() {
                 Manage and analyze pharmaceutical industry contacts
               </p>
               
-             {/* Company Selection */}
-             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-               <h3 className="font-semibold text-blue-800 mb-2">Select Company:</h3>
-               <select
-                 value={currentCompanySlug || ''}
-                 onChange={(e) => setCurrentCompany(e.target.value)}
-                 className="w-full p-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-               >
-                 <option value="">Choose a company...</option>
-                 {Object.values(companies)
-                   .filter(company => company.name !== 'All Data') // Exclude the unified company from main list
-                   .sort((a, b) => a.name.localeCompare(b.name))
-                   .map(company => (
-                     <option key={company.slug} value={company.slug}>
-                       {company.name} ({company.contacts?.length || 0} contacts)
-                     </option>
-                   ))}
-                 <option value="all-data">All Data ({allContacts.length} contacts)</option>
-               </select>
-               {currentCompany && (
-                 <p className="text-sm text-blue-700 mt-2">
-                   Selected: <strong>{currentCompany.name}</strong> with {currentCompany.contacts?.length || 0} contacts
-                 </p>
-               )}
-             </div>
+            {/* Company Selection - Optimized */}
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <h3 className="font-semibold text-blue-800 mb-2">Select Company:</h3>
+              
+              {/* Company Search */}
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Search companies..."
+                  value={companySearchTerm}
+                  onChange={(e) => setCompanySearchTerm(e.target.value)}
+                  className="w-full p-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <select
+                value={currentCompanySlug || ''}
+                onChange={(e) => setCurrentCompany(e.target.value)}
+                className="w-full p-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                aria-label="Select company to view contacts"
+              >
+                <option value="">Choose a company...</option>
+                {Object.values(companies)
+                  .filter(company => company.name !== 'All Data') // Exclude the unified company from main list
+                  .filter(company => 
+                    companySearchTerm === '' || 
+                    company.name.toLowerCase().includes(companySearchTerm.toLowerCase())
+                  )
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .slice(0, 100) // Limit to first 100 companies for performance
+                  .map(company => (
+                    <option key={company.slug} value={company.slug}>
+                      {company.name} ({company.contacts?.length || 0} contacts)
+                    </option>
+                  ))}
+                {Object.values(companies).filter(company => 
+                  company.name !== 'All Data' && 
+                  (companySearchTerm === '' || company.name.toLowerCase().includes(companySearchTerm.toLowerCase()))
+                ).length > 100 && (
+                  <option disabled>... and {Object.values(companies).filter(company => 
+                    company.name !== 'All Data' && 
+                    (companySearchTerm === '' || company.name.toLowerCase().includes(companySearchTerm.toLowerCase()))
+                  ).length - 100} more companies</option>
+                )}
+              </select>
+              {currentCompany && (
+                <p className="text-sm text-blue-700 mt-2">
+                  Selected: <strong>{currentCompany.name}</strong> with {currentCompany.contacts?.length || 0} contacts
+                </p>
+              )}
+              <p className="text-xs text-blue-600 mt-1">
+                Showing first 100 companies for performance. Use search to find specific companies.
+              </p>
+            </div>
             </div>
           </div>
         </div>
@@ -341,8 +396,8 @@ export function Contacts() {
               {/* First Row: Company, Contacts, Brands */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 <div className="text-center p-6 bg-white rounded-2xl shadow-lg border-2 border-blue-200">
-                  <div className="text-4xl font-bold text-blue-600 mb-2">1</div>
-                  <div className="text-sm font-semibold text-blue-700 uppercase tracking-wide">Company</div>
+                  <div className="text-4xl font-bold text-blue-600 mb-2">{Object.keys(companies).length}</div>
+                  <div className="text-sm font-semibold text-blue-700 uppercase tracking-wide">Companies</div>
                 </div>
                 <div className="text-center p-6 bg-white rounded-2xl shadow-lg border-2 border-amber-200">
                   <div className="text-4xl font-bold text-amber-600 mb-2">{indicationEntryCount}</div>
@@ -353,8 +408,11 @@ export function Contacts() {
                   <div className="text-sm font-semibold text-purple-700 uppercase tracking-wide">Products</div>
                 </div>
                 <div className="text-center p-6 bg-white rounded-2xl shadow-lg border-2 border-green-200">
-                  <div className="text-4xl font-bold text-green-600 mb-2">{activeContacts.length}</div>
+                  <div className="text-4xl font-bold text-green-600 mb-2">{allContacts.length}</div>
                   <div className="text-sm font-semibold text-green-700 uppercase tracking-wide">Contacts</div>
+                  {allContacts.length > 10000 && (
+                    <div className="text-xs text-green-600 mt-1">*Limited to 20k for performance</div>
+                  )}
                 </div>
               </div>
 
@@ -363,10 +421,14 @@ export function Contacts() {
                 <h4 className="text-lg font-semibold mb-4 text-gray-700">Contact Status</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(() => {
-                    const knownContacts = activeContacts.filter(contact => 
+                    // Optimize: use sample for large datasets
+                    const contactsToProcess = allContacts.length > 10000 ? 
+                      allContacts.slice(0, 10000) : 
+                      allContacts
+                    const knownContacts = contactsToProcess.filter(contact => 
                       contact.known === true
                     ).length
-                    const unknownContacts = activeContacts.length - knownContacts
+                    const unknownContacts = contactsToProcess.length - knownContacts
                     
                     return (
                       <>
@@ -402,11 +464,16 @@ export function Contacts() {
               <div className="mb-6">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h4 className="text-lg font-semibold text-gray-700">Contacts by Functional Area</h4>
-                      {functionalAreaEntries.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {matchingActiveContacts.length} contacts match the current status filter
-                    </span>
-                  )}
+                  <div className="text-right">
+                    {functionalAreaEntries.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {matchingActiveContacts.length} contacts match the current status filter
+                      </span>
+                    )}
+                    {allContacts.length > 10000 && (
+                      <div className="text-xs text-blue-600 mt-1">*Based on first 2k contacts for performance</div>
+                    )}
+                  </div>
                 </div>
 
                 {actionFeedback && (
