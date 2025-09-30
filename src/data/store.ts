@@ -1200,7 +1200,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
         // Force reload if we have no data or no contacts in the unified company
         const allDataCompany = companies['all-data']
         const hasContacts = allDataCompany && allDataCompany.contacts.length > 0
-        const shouldReload = !hasData || !hasContacts
+        const shouldReload = !hasData || !hasContacts || !allDataCompany
         
         console.log('🔍 Auto-import check:', {
           hasData,
@@ -1209,6 +1209,12 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
           contactCount: allDataCompany?.contacts.length || 0,
           shouldReload
         })
+        
+        // If we have data but no all-data company, clear the cache and reload
+        if (hasData && !allDataCompany) {
+          console.log('🧹 Clearing corrupted cache - no all-data company found')
+          set({ companies: {}, currentCompanySlug: null })
+        }
         
         if (shouldReload) {
           console.log('🚀 Starting auto-import for:', DEFAULT_MASTER_CSV_URL)
