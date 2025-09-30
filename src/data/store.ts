@@ -38,8 +38,8 @@ import {
 } from './transformers'
 import { getDataUrl, DATA_FILES } from '@/lib/dataHosting'
 
-// Max total bytes to auto-run on boot (increased to 20MB for large master files)
-const AUTO_RUN_SIZE_LIMIT = 20 * 1024 * 1024
+// Max total bytes to auto-run on boot (increased to 100MB for large master files)
+const AUTO_RUN_SIZE_LIMIT = 100 * 1024 * 1024
 const DEFAULT_COMPANY_TIERS = ['Tier 1','First Launchers','Focused Platform Builders','Therapeutic Area Specialists','Unclassified'] as const
 const COMPANY_TIERS_STORAGE_KEY = 'pharma-company-tiers'
 // Use remote data hosting instead of local files
@@ -1223,12 +1223,18 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             
             // Then load contacts data
             console.log('👥 Loading contacts data from:', contactsFileUrl)
+            console.log('⏳ This is a large file (95MB), please wait...')
             const contactsRes = await fetch(contactsFileUrl)
             if (contactsRes.ok) {
+              console.log('📥 Downloading contacts file...')
               const contactsBlob = await contactsRes.blob()
+              console.log(`📊 Downloaded ${(contactsBlob.size / 1024 / 1024).toFixed(1)}MB contacts file`)
               const contactsFile = new File([contactsBlob], 'master-contacts.csv', { type: 'text/csv' })
+              console.log('🔄 Processing contacts data...')
               await get().importMasterCsv(contactsFile)
               console.log('✅ Contacts data loaded successfully')
+            } else {
+              console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
             }
             
             console.log('🎉 All data loaded successfully!')
