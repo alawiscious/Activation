@@ -2086,7 +2086,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
           header: true,
           skipEmptyLines: true,
           delimiter: ',',
-          worker: true,
+          worker: false,
           step: (results) => {
             const raw = results.data as any
             // Normalize header keys here since worker cannot clone transformHeader
