@@ -1,6 +1,6 @@
 // Genome Contact Importer - Fetches all contacts from Genome API and creates/updates local contacts
 
-import { Contact } from '../types/domain'
+import { Contact, DispositionToKlick, InfluenceLevel, DerivedContactLabel } from '../types/domain'
 
 export interface GenomeContact {
   id: string
@@ -145,10 +145,10 @@ class GenomeContactImporter {
     // Create a map of existing contacts for quick lookup
     const existingContactMap = new Map<string, Contact>()
     existingContacts.forEach(contact => {
-      // Index by email, name+company, and Genome ID
+      // Index by email, firstName+lastName+currCompany, and Genome ID
       if (contact.email) existingContactMap.set(contact.email.toLowerCase(), contact)
-      if (contact.name && contact.company) {
-        const key = `${contact.name.toLowerCase()}-${contact.company.toLowerCase()}`
+      if (contact.firstName && contact.lastName && contact.currCompany) {
+        const key = `${contact.firstName.toLowerCase()}-${contact.lastName.toLowerCase()}-${contact.currCompany.toLowerCase()}`
         existingContactMap.set(key, contact)
       }
       if (contact.genomeCrmcontactId) {
@@ -207,10 +207,12 @@ class GenomeContactImporter {
     
     return {
       id,
-      name: genomeContact.fullName || `${genomeContact.firstName || ''} ${genomeContact.lastName || ''}`.trim(),
+      firstName: genomeContact.firstName || '',
+      lastName: genomeContact.lastName || '',
       email: genomeContact.email || '',
       title: genomeContact.title || '',
-      company: genomeContact.company || '',
+      level: 'Individual Contributor', // Default level
+      currCompany: (genomeContact as any).company || '',
       functionalArea: genomeContact.functionalArea || '',
       seniorityLevel: genomeContact.seniorityLevel || '',
       location: genomeContact.location || '',
@@ -229,20 +231,19 @@ class GenomeContactImporter {
       linkedinLastPulled: genomeContact.linkedinLastPulled || '',
       
       // Genome-specific fields
-      dispositionToKlick: genomeContact.dispositionToKlick || 'Unknown',
-      influenceLevel: genomeContact.influenceLevel || 'Unknown',
-      derivedContactLabel: genomeContact.derivedContactLabel || 'Unknown',
+      dispositionToKlick: (genomeContact.dispositionToKlick as DispositionToKlick) || 'Unknown',
+      influenceLevel: (genomeContact.influenceLevel as InfluenceLevel) || 'Unknown',
+      derivedLabel: ((genomeContact as any).derivedContactLabel as DerivedContactLabel) || 'Unknown',
       
       // Standard fields
       known: genomeContact.emailCount && genomeContact.emailCount > 0 ? true : false,
       isIrrelevant: false,
-      notes: genomeContact.notes || '',
-      tags: genomeContact.tags || ['genome-imported'],
+      // notes is not a property of Contact type
       
       // Metadata
-      createdAt: genomeContact.createdAt || new Date().toISOString(),
-      updatedAt: genomeContact.updatedAt || new Date().toISOString(),
-      source: 'genome_api'
+      createdAt: genomeContact.createdAt ? new Date(genomeContact.createdAt) : new Date(),
+      updatedAt: genomeContact.updatedAt ? new Date(genomeContact.updatedAt) : new Date()
+      // source is not a property of Contact type
     }
   }
 
@@ -253,7 +254,7 @@ class GenomeContactImporter {
       // Update with Genome data, preserving existing data where Genome data is missing
       email: genomeContact.email || existingContact.email,
       title: genomeContact.title || existingContact.title,
-      company: genomeContact.company || existingContact.company,
+      currCompany: (genomeContact as any).company || existingContact.currCompany,
       functionalArea: genomeContact.functionalArea || existingContact.functionalArea,
       seniorityLevel: genomeContact.seniorityLevel || existingContact.seniorityLevel,
       location: genomeContact.location || existingContact.location,
@@ -274,7 +275,7 @@ class GenomeContactImporter {
       // Genome-specific fields
       dispositionToKlick: genomeContact.dispositionToKlick || existingContact.dispositionToKlick || 'Unknown',
       influenceLevel: genomeContact.influenceLevel || existingContact.influenceLevel || 'Unknown',
-      derivedContactLabel: genomeContact.derivedContactLabel || existingContact.derivedContactLabel || 'Unknown',
+      derivedLabel: ((genomeContact as any).derivedContactLabel as DerivedContactLabel) || existingContact.derivedLabel || 'Unknown',
       
       // Update known status based on activity
       known: (genomeContact.emailCount && genomeContact.emailCount > 0) || existingContact.known || false,
@@ -283,7 +284,7 @@ class GenomeContactImporter {
       tags: [...new Set([...(existingContact.tags || []), ...(genomeContact.tags || [])])],
       
       // Update timestamp
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date()
     }
   }
 
