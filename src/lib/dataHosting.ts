@@ -90,7 +90,7 @@ export function getFallbackUrl(filename: string): string | null {
 export const DATA_FILES = {
   contacts: 'master-contacts.csv',
   revenue: 'master-revenue.csv', 
-  companies: 'master-company-file.csv'
+  companies: 'master-revenue.csv'  // Use revenue file for company data since it contains company/brand info
 } as const
 
 // Helper to load data with fallback

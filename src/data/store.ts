@@ -1207,8 +1207,8 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
           }
           
           // Load both company file and contacts file for complete data
-          const companyFileUrl = '/master-company-file.csv'
-          const contactsFileUrl = '/master-contacts.csv'
+          const companyFileUrl = getDataUrl(DATA_FILES.companies)
+          const contactsFileUrl = getDataUrl(DATA_FILES.contacts)
           
           try {
             // Load company/brand/revenue data first
