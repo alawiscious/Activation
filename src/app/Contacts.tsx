@@ -23,11 +23,11 @@ export function Contacts() {
   
   const currentCompany = currentCompanySlug ? companies[currentCompanySlug] : null
 
+  // Use all contacts from all companies instead of requiring company selection
   const activeContacts = useMemo(() => {
-    if (!currentCompany) return []
     // Limit to first 1000 contacts to prevent performance issues
-    return currentCompany.contacts.filter(contact => !contact.isIrrelevant).slice(0, 1000)
-  }, [currentCompany])
+    return allContacts.slice(0, 1000)
+  }, [allContacts])
 
   // Get ALL contacts from ALL companies for comprehensive import
   const allContacts = useMemo(() => {
@@ -49,10 +49,9 @@ export function Contacts() {
   }, [activeContacts, contactFilter])
 
   const functionalAreaEntries = useMemo(() => {
-    if (!currentCompany) return []
     const stats = new Map<string, { active: number; irrelevant: number }>()
 
-    currentCompany.contacts.forEach(contact => {
+    allContacts.forEach(contact => {
       const area = contact.functionalArea?.trim() || 'Unknown'
       const entry = stats.get(area) ?? { active: 0, irrelevant: 0 }
 
@@ -82,7 +81,7 @@ export function Contacts() {
         if (a.irrelevant !== b.irrelevant) return a.irrelevant - b.irrelevant
         return a.area.localeCompare(b.area)
       })
-  }, [currentCompany, contactFilter])
+  }, [allContacts, contactFilter])
 
   useEffect(() => {
     setSelectedFunctionalAreas(prev => {
@@ -96,24 +95,24 @@ export function Contacts() {
   }, [selectedFunctionalAreas, contactFilter])
 
   const selectedActiveContacts = useMemo(() => {
-    if (!currentCompany || selectedFunctionalAreas.length === 0) return []
+    if (selectedFunctionalAreas.length === 0) return []
     const areaSet = new Set(selectedFunctionalAreas)
     return activeContacts.filter(contact => {
       const area = contact.functionalArea?.trim() || 'Unknown'
       if (!areaSet.has(area)) return false
       return matchesCurrentStatus(contact)
     })
-  }, [currentCompany, activeContacts, selectedFunctionalAreas, contactFilter])
+  }, [activeContacts, selectedFunctionalAreas, contactFilter])
 
   const selectedIrrelevantContacts = useMemo(() => {
-    if (!currentCompany || selectedFunctionalAreas.length === 0) return []
+    if (selectedFunctionalAreas.length === 0) return []
     const areaSet = new Set(selectedFunctionalAreas)
-    return currentCompany.contacts.filter(contact => {
+    return allContacts.filter(contact => {
       if (!contact.isIrrelevant) return false
       const area = contact.functionalArea?.trim() || 'Unknown'
       return areaSet.has(area)
     })
-  }, [currentCompany, selectedFunctionalAreas])
+  }, [allContacts, selectedFunctionalAreas])
 
   const handleToggleFunctionalArea = (area: string) => {
     setSelectedFunctionalAreas(prev =>
@@ -518,10 +517,10 @@ export function Contacts() {
               </div>
 
               {/* Performance Warning */}
-              {currentCompany && currentCompany.contacts.length > 1000 && (
+              {allContacts.length > 1000 && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    <strong>Performance Notice:</strong> This company has {currentCompany.contacts.length} contacts. 
+                    <strong>Performance Notice:</strong> Total dataset has {allContacts.length} contacts. 
                     Showing first 1,000 for optimal performance. Use filters to narrow down results.
                   </p>
                 </div>
