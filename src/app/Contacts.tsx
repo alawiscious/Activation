@@ -40,6 +40,14 @@ export function Contacts() {
       allContactsCount: allContacts.length,
       companies: Object.keys(companies)
     })
+    
+    // Immediate debug - show first contact if any
+    if (currentCompany?.contacts?.length > 0) {
+      console.info('🔍 First contact sample:', currentCompany.contacts[0])
+    }
+    if (allContacts.length > 0) {
+      console.info('🔍 First allContacts sample:', allContacts[0])
+    }
   }, [currentCompanySlug, companies, currentCompany, activeContacts, allContacts])
 
   // Get ALL contacts from ALL companies for comprehensive import
@@ -255,6 +263,23 @@ export function Contacts() {
               <p className="text-lg text-muted-foreground font-light">
                 Manage and analyze pharmaceutical industry contacts
               </p>
+              
+              {/* Debug info */}
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <h3 className="font-semibold text-yellow-800">Debug Info:</h3>
+                <p className="text-sm text-yellow-700">
+                  Companies: {Object.keys(companies).length} | 
+                  Current: {currentCompany?.name || 'None'} | 
+                  Current Contacts: {currentCompany?.contacts?.length || 0} | 
+                  All Contacts: {allContacts.length} | 
+                  Active: {activeContacts.length}
+                </p>
+                {currentCompany?.contacts?.length > 0 && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    First contact: {currentCompany.contacts[0].firstName} {currentCompany.contacts[0].lastName} at {currentCompany.contacts[0].currCompany}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
