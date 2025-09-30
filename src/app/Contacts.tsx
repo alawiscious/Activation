@@ -48,6 +48,12 @@ export function Contacts() {
     if (allContacts.length > 0) {
       console.info('🔍 First allContacts sample:', allContacts[0])
     }
+    
+    // Quick sanity checks - always run
+    (window as any).__contacts = allContacts;
+    console.info('contacts count', (window as any).__contacts?.length);
+    console.info('sample keys', Object.keys((window as any).__contacts?.[0] || {}));
+    console.info('sample contact', (window as any).__contacts?.[0]);
   }, [currentCompanySlug, companies, currentCompany, activeContacts, allContacts])
 
   // Get ALL contacts from ALL companies for comprehensive import
