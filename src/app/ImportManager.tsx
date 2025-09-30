@@ -28,6 +28,7 @@ export function ImportManager() {
   const [masterSummary, setMasterSummary] = useState<{ total: number; processed: number; companiesAffected: number; brandsCreated: number; upserts: number; affectedCompanies: { slug: string; name: string }[] } | null>(null)
   const [masterImporting, setMasterImporting] = useState(false)
   const [runningMasterContacts, setRunningMasterContacts] = useState(false)
+  const [fileUploading, setFileUploading] = useState(false)
 
   // Refs for auto import form elements
   const autoSrcTypeRef = useRef<HTMLSelectElement>(null)
@@ -75,15 +76,27 @@ export function ImportManager() {
   const handleFileUpload = useCallback(async (file: File, type: 'brands' | 'contacts' | 'revenue') => {
     try {
       setImportErrors([])
+      setFileUploading(true)
+      console.log(`📁 Uploading ${type} file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
+      
+      // Read the file content
+      const fileContent = await file.text()
+      console.log(`📊 File content loaded: ${fileContent.length} characters`)
+      
       if (type === 'brands') {
-        await importBrandsCsv(file.name)
+        await importBrandsCsv(fileContent)
       } else if (type === 'contacts') {
-        await importContactsCsv(file.name)
+        console.log('🔄 Processing contacts data...')
+        await importContactsCsv(fileContent, { preview: false, overwrite: true })
+        console.log('✅ Contacts processed successfully')
       } else if (type === 'revenue') {
-        await importRevenueCsv(file.name)
+        await importRevenueCsv(fileContent)
       }
     } catch (err) {
+      console.error(`❌ ${type} import failed:`, err)
       setImportErrors([err instanceof Error ? err.message : `${type} import failed`])
+    } finally {
+      setFileUploading(false)
     }
   }, [importBrandsCsv, importContactsCsv, importRevenueCsv])
 
