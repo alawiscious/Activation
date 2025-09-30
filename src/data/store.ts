@@ -1264,13 +1264,13 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                   allDataCompany.revenueRows.push(...company.revenueRows)
                 })
                 
-                // Add the unified company alongside the existing companies
+                // Add the unified company alongside the existing companies (don't auto-select it)
                 set({ 
                   companies: { 
                     ...companies,  // Keep all existing companies
                     [allDataSlug]: allDataCompany  // Add the unified company
-                  },
-                  currentCompanySlug: allDataSlug
+                  }
+                  // Don't set currentCompanySlug - let user choose
                 })
                 
                 console.log(`🏢 Created unified company with ${allDataCompany.brands.length} brands`)
@@ -1616,8 +1616,8 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                     ...allDataCompany,
                     contacts: transformedContacts
                   }
-                },
-                currentCompanySlug: 'all-data'
+                }
+                // Don't set currentCompanySlug - let user choose
               })
 
               console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)

@@ -35,8 +35,8 @@ export function Contacts() {
 
   const activeContacts = useMemo(() => {
     if (!currentCompany) return []
-    // Limit to first 1000 contacts to prevent performance issues
-    return currentCompany.contacts.filter(contact => !contact.isIrrelevant).slice(0, 1000)
+    // Show all contacts, no artificial limit
+    return currentCompany.contacts.filter(contact => !contact.isIrrelevant)
   }, [currentCompany])
 
   // 3) Debug render path
