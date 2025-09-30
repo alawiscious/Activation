@@ -24,6 +24,15 @@ export function Contacts() {
   
   const currentCompany = currentCompanySlug ? companies[currentCompanySlug] : null
 
+  // Get ALL contacts from ALL companies for comprehensive import
+  const allContacts = useMemo(() => {
+    const allContactsList: Contact[] = []
+    Object.values(companies).forEach(company => {
+      allContactsList.push(...company.contacts.filter(contact => !contact.isIrrelevant))
+    })
+    return allContactsList
+  }, [companies])
+
   const activeContacts = useMemo(() => {
     if (!currentCompany) return []
     // Limit to first 1000 contacts to prevent performance issues
@@ -43,7 +52,7 @@ export function Contacts() {
     })
     
     // Immediate debug - show first contact if any
-    if (currentCompany?.contacts?.length > 0) {
+    if (currentCompany?.contacts && currentCompany.contacts.length > 0) {
       console.info('🔍 First contact sample:', currentCompany.contacts[0])
     }
     if (allContacts.length > 0) {
@@ -56,15 +65,6 @@ export function Contacts() {
     console.info('sample keys', Object.keys((window as any).__contacts?.[0] || {}));
     console.info('sample contact', (window as any).__contacts?.[0]);
   }, [currentCompanySlug, companies, currentCompany, activeContacts, allContacts])
-
-  // Get ALL contacts from ALL companies for comprehensive import
-  const allContacts = useMemo(() => {
-    const allContactsList: Contact[] = []
-    Object.values(companies).forEach(company => {
-      allContactsList.push(...company.contacts.filter(contact => !contact.isIrrelevant))
-    })
-    return allContactsList
-  }, [companies])
 
   const matchesCurrentStatus = (contact: Contact) => {
     if (contactFilter === 'known') return contact.known === true
@@ -281,7 +281,7 @@ export function Contacts() {
                   All Contacts: {allContacts.length} | 
                   Active: {activeContacts.length}
                 </p>
-                {currentCompany?.contacts?.length > 0 && (
+                {currentCompany?.contacts && currentCompany.contacts.length > 0 && (
                   <p className="text-xs text-yellow-600 mt-1">
                     First contact: {currentCompany.contacts[0].firstName} {currentCompany.contacts[0].lastName} at {currentCompany.contacts[0].currCompany}
                   </p>

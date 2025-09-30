@@ -30,7 +30,6 @@ import { DEFAULT_DISPOSITION, DEFAULT_INFLUENCE_LEVEL, deriveContactLabel } from
 import { backfillCompanyTiers, type CompanyEnrichmentData } from './tiering'
 import {
   transformBrandsCsv,
-  transformContactsCsv,
   transformRevenueCsv,
   mapRevenueToBrands,
   createBrandShellsWithInfo,
@@ -500,7 +499,7 @@ interface PendingContactImportState {
   fallbackSlug?: string
 }
 
-const buildContactImportPreview = (
+// const buildContactImportPreview = (
   records: ContactImportRecord[],
   companies: Record<string, CompanyState>,
   fallbackSlug?: string
@@ -1535,14 +1534,12 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
       csvData: string,
       options?: { overwrite?: boolean; preserveEdits?: boolean; preview?: boolean }
     ) => {
-      const { currentCompanySlug, companies } = get()
-
       const Papa = await import('papaparse')
       
       const normalizeKey = (s: string) =>
         s?.replace(/\uFEFF/g, '').trim().toLowerCase().replace(/\s+/g, '_');
 
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<any>((resolve, reject) => {
         Papa.parse(csvData, {
           header: true,
           skipEmptyLines: 'greedy',
@@ -1607,8 +1604,7 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                     contacts: transformedContacts
                   }
                 },
-                currentCompanySlug: 'all-data',
-                defaultMasterTriggered: true
+                currentCompanySlug: 'all-data'
               })
 
               console.log(`👥 Added ${transformedContacts.length} contacts to unified company`)

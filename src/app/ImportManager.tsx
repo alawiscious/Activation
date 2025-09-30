@@ -28,7 +28,7 @@ export function ImportManager() {
   const [masterSummary, setMasterSummary] = useState<{ total: number; processed: number; companiesAffected: number; brandsCreated: number; upserts: number; affectedCompanies: { slug: string; name: string }[] } | null>(null)
   const [masterImporting, setMasterImporting] = useState(false)
   const [runningMasterContacts, setRunningMasterContacts] = useState(false)
-  const [fileUploading, setFileUploading] = useState(false)
+  const [, setFileUploading] = useState(false)
 
   // Refs for auto import form elements
   const autoSrcTypeRef = useRef<HTMLSelectElement>(null)

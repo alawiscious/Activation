@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { usePharmaVisualPivotStore } from '@/data/store'
-import { selectors } from '@/data/selectors'
 import { ContactCard } from './ContactCard'
 import { FilterBar } from '@/components/Filters/FilterBar'
 import { Button } from '@/components/ui/Button'

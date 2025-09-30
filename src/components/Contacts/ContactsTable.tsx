@@ -22,7 +22,6 @@ import {
   Building2,
 } from 'lucide-react'
 import { usePharmaVisualPivotStore } from '@/data/store'
-import { selectors } from '@/data/selectors'
 import type { Contact } from '@/types/domain'
 import { formatDerivedLabel, getLabelPalette } from '@/lib/contactLabeling'
 
