@@ -1242,6 +1242,15 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             }
             
             console.log('🎉 All data loaded successfully!')
+            
+            // Auto-select the first company if none is selected
+            const { companies, currentCompanySlug } = get()
+            if (!currentCompanySlug && Object.keys(companies).length > 0) {
+              const firstCompanySlug = Object.keys(companies)[0]
+              console.log(`🏢 Auto-selecting first company: ${firstCompanySlug}`)
+              set({ currentCompanySlug: firstCompanySlug })
+            }
+            
             return
             
           } catch (error) {
