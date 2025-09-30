@@ -1224,17 +1224,21 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
             // Then load contacts data
             console.log('👥 Loading contacts data from:', contactsFileUrl)
             console.log('⏳ This is a large file (95MB), please wait...')
-            const contactsRes = await fetch(contactsFileUrl)
-            if (contactsRes.ok) {
-              console.log('📥 Downloading contacts file...')
-              const contactsBlob = await contactsRes.blob()
-              console.log(`📊 Downloaded ${(contactsBlob.size / 1024 / 1024).toFixed(1)}MB contacts file`)
-              const contactsFile = new File([contactsBlob], 'master-contacts.csv', { type: 'text/csv' })
-              console.log('🔄 Processing contacts data...')
-              await get().importMasterCsv(contactsFile)
-              console.log('✅ Contacts data loaded successfully')
-            } else {
-              console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
+            try {
+              const contactsRes = await fetch(contactsFileUrl)
+              if (contactsRes.ok) {
+                console.log('📥 Downloading contacts file...')
+                const contactsBlob = await contactsRes.blob()
+                console.log(`📊 Downloaded ${(contactsBlob.size / 1024 / 1024).toFixed(1)}MB contacts file`)
+                const contactsFile = new File([contactsBlob], 'master-contacts.csv', { type: 'text/csv' })
+                console.log('🔄 Processing contacts data...')
+                await get().importContactsCsv(await contactsFile.text())
+                console.log('✅ Contacts data loaded successfully')
+              } else {
+                console.error('❌ Failed to load contacts data:', contactsRes.status, contactsRes.statusText)
+              }
+            } catch (error) {
+              console.error('❌ Error loading contacts data:', error)
             }
             
             console.log('🎉 All data loaded successfully!')
