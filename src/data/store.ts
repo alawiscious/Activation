@@ -1601,9 +1601,11 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                 updatedAt: new Date(),
               }))
 
-              // Update the unified company with all contacts
+              // Update the unified company with all contacts (preserve existing companies)
+              const { companies: existingCompanies } = get()
               set({
                 companies: {
+                  ...existingCompanies,  // Keep all existing companies
                   'all-data': {
                     ...allDataCompany,
                     contacts: transformedContacts
