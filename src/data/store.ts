@@ -1258,9 +1258,12 @@ export const usePharmaVisualPivotStore = create<PharmaVisualPivotStore>()(
                   allDataCompany.revenueRows.push(...company.revenueRows)
                 })
                 
-                // Replace all companies with the single merged company
+                // Add the unified company alongside the existing companies
                 set({ 
-                  companies: { [allDataSlug]: allDataCompany },
+                  companies: { 
+                    ...companies,  // Keep all existing companies
+                    [allDataSlug]: allDataCompany  // Add the unified company
+                  },
                   currentCompanySlug: allDataSlug
                 })
                 
